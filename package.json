@@ -1,5 +1,5 @@
 {
-  "name": "hades",
+  "name": "@adoratorio/hades",
   "version": "0.0.1",
   "description": "A smooth scrollbar based on Hermes, scroll down 'till hell",
   "main": "dist/index.js",
