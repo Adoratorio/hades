@@ -30,7 +30,10 @@
     "url": "https://github.com/Adoratorio/hades/issues"
   },
   "homepage": "https://github.com/Adoratorio/hades#readme",
-  "dependencies": {},
+  "dependencies": {
+    "@adoratorio/aion": "^0.3.2",
+    "@adoratorio/hermes": "^0.1.1"
+  },
   "devDependencies": {
     "typescript": "^3.3.3333"
   }
