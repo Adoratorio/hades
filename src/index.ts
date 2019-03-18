@@ -48,12 +48,12 @@ class Hades {
     this.timeline = {
       start: 0,
       duration: this.options.duration,
-      initial: 0,
-      final: 0,
-      current: 0,
+      initial: { x: 0, y: 0 },
+      final: { x: 0, y: 0 },
+      current: { x: 0, y: 0 },
     };
     this.scrollHandler = (event : HermesEvent) => this.scroll(event);
-    this.frameHandler = (time : number) => this.frame(time);
+    this.frameHandler = (delta : number) => this.frame(delta);
 
     if (this.options.container === null || typeof this.options.viewport === 'undefined') {
       throw new Error('Viewport cannot be undefined');
@@ -66,9 +66,15 @@ class Hades {
     this.viewportRect = this.options.viewport.getBoundingClientRect() as DOMRect
     this.containerRect = this.options.container.getBoundingClientRect() as DOMRect;
     this.boundries = {
-      top: this.containerRect.top,
+      top: 0,
       bottom: this.containerRect.height - this.viewportRect.height,
+      left: 0,
+      right: 0,
     }
+
+    // Set base css for performance boost
+    this.options.container.style.webkitBackfaceVisibility = 'hidden';
+    this.options.container.style.backfaceVisibility = 'hidden';
 
     // Atach and listen to events
     this.manager = new Hermes({
@@ -86,29 +92,37 @@ class Hades {
     if (this.options.autoplay) this.engine.start();
   }
 
-  private frame(time : number) : void {
-    // Calculate the delta based on the last triggered event
-    const deltaT = performance.now() - this.timeline.start;
-    const clampDeltaT = Math.min(Math.max(deltaT, 0), this.options.duration);
+  private frame(delta : number) : void {
+    // Get the new final value
+    this.timeline.final.x = this.internalAmount.x;
+    this.timeline.final.y = this.internalAmount.y;
+    // Normalize delta based on duration
+    delta = Math.min(Math.max(delta, 0), this.options.duration);
     // Normalize the delta to be 0 - 1
-    let t = clampDeltaT / this.timeline.duration;
+    let time = delta / this.timeline.duration;
     // Get the interpolated time
-    t = this.options.easing(t);
+    time = this.options.easing(time);
     // Use the interpolated time to calculate values
-    this.timeline.current = this.timeline.initial + (t * (this.timeline.final - this.timeline.initial));
-    this.amount.y = this.timeline.current;
+    this.timeline.current.x = this.timeline.initial.x + (time * (this.timeline.final.x - this.timeline.initial.x));
+    this.timeline.current.y = this.timeline.initial.y + (time * (this.timeline.final.y - this.timeline.initial.y));
+    this.amount.x = this.options.renderByPixel ? Math.round(this.timeline.current.x) : this.timeline.current.x;
+    this.amount.y = this.options.renderByPixel ? Math.round(this.timeline.current.y) : this.timeline.current.y;
+    // Apply transformation
     const px = this.options.lockX ? 0 : this.amount.x * -1;
     const py = this.options.lockY ? 0 : this.amount.y * -1;
-    const prop = `translateX(${px}px) translateY(${py}px)`;
+    const prop = `translateX(${px}px) translateY(${py}px) translateZ(0)`;
     this.options.container.style.transform = prop;
+    // Reset the initial position of the timeline for the next frame
+    this.timeline.initial = this.timeline.current;
   }
 
   private scroll(event : HermesEvent) : void {
-    this.internalAmount.x += event.delta.x;
-    this.internalAmount.y += event.delta.y;
-    this.timeline.start = performance.now();
-    this.timeline.initial = this.timeline.current;
-    this.timeline.final = this.internalAmount.y;
+    // Temporary sum amount
+    const tempX = this.internalAmount.x + event.delta.x;
+    const tempY = this.internalAmount.y + event.delta.y;
+    // Clamp the sum amount to be inside the boundries
+    this.internalAmount.x = Math.min(Math.max(tempX, this.boundries.left), this.boundries.right);
+    this.internalAmount.y = Math.min(Math.max(tempY, this.boundries.top), this.boundries.bottom);
   }
 
   private get virtual() {

@@ -27,6 +27,8 @@ export interface HadesOptions {
 export interface Boundries {
   top : number,
   bottom : number,
+  left : number,
+  right : number,
 }
 
 export interface Vec2 {
@@ -37,7 +39,7 @@ export interface Vec2 {
 export interface Timeline {
   start : number,
   duration : number,
-  initial : number,
-  final : number,
-  current : number,
+  initial : Vec2,
+  final : Vec2,
+  current : Vec2,
 }
