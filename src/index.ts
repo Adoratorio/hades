@@ -5,7 +5,8 @@ import {
   MODE,
   HadesOptions,
   Boundries,
-  Vec2
+  Vec2,
+  Timeline,
 } from "./declarations";
 import Easings from "./easing";
 
@@ -22,6 +23,7 @@ class Hades {
   private internalAmount : Vec2 = { x: 0, y: 0 };
   private scrollHandler : Function;
   private frameHandler : Function;
+  private timeline : Timeline;
 
   public amount : Vec2 = { x: 0, y: 0 };
 
@@ -43,6 +45,13 @@ class Hades {
       aion: null,
     };
     this.options = { ...defaults, ...options };
+    this.timeline = {
+      start: 0,
+      duration: this.options.duration,
+      initial: 0,
+      final: 0,
+      current: 0,
+    };
     this.scrollHandler = (event : HermesEvent) => this.scroll(event);
     this.frameHandler = (time : number) => this.frame(time);
 
@@ -78,8 +87,18 @@ class Hades {
   }
 
   private frame(time : number) : void {
-    const px = this.options.lockX ? 0 : this.internalAmount.x * -1;
-    const py = this.options.lockY ? 0 : this.internalAmount.y * -1;
+    // Calculate the delta based on the last triggered event
+    const deltaT = performance.now() - this.timeline.start;
+    const clampDeltaT = Math.min(Math.max(deltaT, 0), this.options.duration);
+    // Normalize the delta to be 0 - 1
+    let t = clampDeltaT / this.timeline.duration;
+    // Get the interpolated time
+    t = this.options.easing(t);
+    // Use the interpolated time to calculate values
+    this.timeline.current = this.timeline.initial + (t * (this.timeline.final - this.timeline.initial));
+    this.amount.y = this.timeline.current;
+    const px = this.options.lockX ? 0 : this.amount.x * -1;
+    const py = this.options.lockY ? 0 : this.amount.y * -1;
     const prop = `translateX(${px}px) translateY(${py}px)`;
     this.options.container.style.transform = prop;
   }
@@ -87,7 +106,9 @@ class Hades {
   private scroll(event : HermesEvent) : void {
     this.internalAmount.x += event.delta.x;
     this.internalAmount.y += event.delta.y;
-    console.log(this.internalAmount);
+    this.timeline.start = performance.now();
+    this.timeline.initial = this.timeline.current;
+    this.timeline.final = this.internalAmount.y;
   }
 
   private get virtual() {
