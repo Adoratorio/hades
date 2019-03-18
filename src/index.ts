@@ -20,6 +20,8 @@ class Hades {
   private engine : Aion;
   private manager : Hermes;
   private internalAmount : Vec2 = { x: 0, y: 0 };
+  private scrollHandler : Function;
+  private frameHandler : Function;
 
   public amount : Vec2 = { x: 0, y: 0 };
 
@@ -41,6 +43,15 @@ class Hades {
       aion: null,
     };
     this.options = { ...defaults, ...options };
+    this.scrollHandler = (event : HermesEvent) => this.scroll(event);
+    this.frameHandler = (time : number) => this.frame(time);
+
+    if (this.options.container === null || typeof this.options.viewport === 'undefined') {
+      throw new Error('Viewport cannot be undefined');
+    }
+    if (this.options.container === null || typeof this.options.container === 'undefined') {
+      throw new Error('Container cannot be undefined');
+    }
 
     // Initialize apropriate dimensions
     this.viewportRect = this.options.viewport.getBoundingClientRect() as DOMRect
@@ -52,9 +63,9 @@ class Hades {
 
     // Atach and listen to events
     this.manager = new Hermes({
-      mode: Hermes.MODE.VIRTUAL,
+      container: window,
     });
-    this.manager.on(this.scroll);
+    this.manager.on(this.scrollHandler);
 
     // Check and initialize Aion
     if (this.options.aion === null || typeof this.options.aion === 'undefined') {
@@ -62,18 +73,21 @@ class Hades {
     } else {
       this.engine = this.options.aion;
     }
-    this.engine.add(this.frame, 'hades_frame');
+    this.engine.add(this.frameHandler, 'hades_frame');
     if (this.options.autoplay) this.engine.start();
   }
 
   private frame(time : number) : void {
-    console.log(time);
+    const px = this.options.lockX ? 0 : this.internalAmount.x * -1;
+    const py = this.options.lockY ? 0 : this.internalAmount.y * -1;
+    const prop = `translateX(${px}px) translateY(${py}px)`;
+    this.options.container.style.transform = prop;
   }
 
   private scroll(event : HermesEvent) : void {
     this.internalAmount.x += event.delta.x;
     this.internalAmount.y += event.delta.y;
-    console.log(event);
+    console.log(this.internalAmount);
   }
 
   private get virtual() {
