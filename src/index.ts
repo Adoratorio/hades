@@ -98,12 +98,16 @@ class Hades {
     // Get the new final value
     this.timeline.final.x = this.internalAmount.x;
     this.timeline.final.y = this.internalAmount.y;
+
     // Normalize delta based on duration
     delta = Math.min(Math.max(delta, 0), this.options.duration);
+
     // Normalize the delta to be 0 - 1
     let time = delta / this.timeline.duration;
+
     // Get the interpolated time
     time = this.options.easing(time);
+
     // Use the interpolated time to calculate values
     this.timeline.current.x = this.timeline.initial.x + (time * (this.timeline.final.x - this.timeline.initial.x));
     this.timeline.current.y = this.timeline.initial.y + (time * (this.timeline.final.y - this.timeline.initial.y));
@@ -113,16 +117,19 @@ class Hades {
     const roundedCurrentY = Math.round(this.timeline.current.y);
     this.amount.x = this.options.renderByPixel ? roundedCurrentX : currentX;
     this.amount.y = this.options.renderByPixel ? roundedCurrentY : currentY;
+
     // Apply transformation
     const px = this.options.lockX ? 0 : this.amount.x * -1;
     const py = this.options.lockY ? 0 : this.amount.y * -1;
     const prop = `translateX(${px}px) translateY(${py}px) translateZ(0)`;
     this.options.container.style.transform = prop;
+
     // Calculate the speed
     this.speed.x = Math.abs((currentX - this.prevAmount.x) / delta);
     this.speed.y = Math.abs((currentY - this.prevAmount.y) / delta);
     this.prevAmount.x = currentX;
     this.prevAmount.y = currentY;
+
     // Reset the initial position of the timeline for the next frame
     this.timeline.initial = this.timeline.current;
   }
