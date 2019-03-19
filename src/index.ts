@@ -17,7 +17,6 @@ class Hades {
   private options : HadesOptions;
   private viewportRect : DOMRect;
   private containerRect : DOMRect;
-  private boundries : Boundries;
   private engine : Aion;
   private manager : Hermes;
   private internalAmount : Vec2 = { x: 0, y: 0 };
@@ -39,6 +38,7 @@ class Hades {
       renderByPixel: true,
       lockX: true,
       lockY: false,
+      boundries: Hades.createBoundries(0, 0, 0, 0),
       mode: MODE.AUTO,
       sections: false,
       autoplay: true,
@@ -65,12 +65,6 @@ class Hades {
     // Initialize apropriate dimensions
     this.viewportRect = this.options.viewport.getBoundingClientRect() as DOMRect
     this.containerRect = this.options.container.getBoundingClientRect() as DOMRect;
-    this.boundries = {
-      top: 0,
-      bottom: this.containerRect.height - this.viewportRect.height,
-      left: 0,
-      right: 0,
-    }
 
     // Set base css for performance boost
     this.options.container.style.webkitBackfaceVisibility = 'hidden';
@@ -121,12 +115,20 @@ class Hades {
     const tempX = this.internalAmount.x + event.delta.x;
     const tempY = this.internalAmount.y + event.delta.y;
     // Clamp the sum amount to be inside the boundries
-    this.internalAmount.x = Math.min(Math.max(tempX, this.boundries.left), this.boundries.right);
-    this.internalAmount.y = Math.min(Math.max(tempY, this.boundries.top), this.boundries.bottom);
+    this.internalAmount.x = Math.min(Math.max(tempX, this.options.boundries.min.x), this.options.boundries.max.y);
+    this.internalAmount.y = Math.min(Math.max(tempY, this.options.boundries.min.y), this.options.boundries.max.y);
   }
 
   private get virtual() {
     return this.options.mode === Hades.MODE.VIRTUAL;
+  }
+
+  public static createBoundries(xMin : number, xMax : number, yMin : number, yMax : number) : Boundries {
+    const boundries : Boundries = {
+      min: { x: xMin, y: yMin },
+      max: { x: xMax, y: yMax }
+    };
+    return boundries;
   }
 }
 

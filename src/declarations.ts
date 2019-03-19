@@ -18,6 +18,7 @@ export interface HadesOptions {
   renderByPixel : boolean,
   lockX : boolean,
   lockY : boolean,
+  boundries : Boundries,
   mode : string,
   sections : boolean,
   autoplay : boolean,
@@ -25,10 +26,8 @@ export interface HadesOptions {
 }
 
 export interface Boundries {
-  top : number,
-  bottom : number,
-  left : number,
-  right : number,
+  max : Vec2,
+  min : Vec2,
 }
 
 export interface Vec2 {
