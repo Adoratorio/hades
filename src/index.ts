@@ -26,8 +26,10 @@ class Hades {
   private frameHandler : Function;
   private timeline : Timeline;
   private prevDirection : Vec2 = { x: Hades.DIRECTION.INITIAL, y: Hades.DIRECTION.INITIAL };
+  private prevAmount : Vec2 = { x: 0, y: 0 };
 
   public amount : Vec2 = { x: 0, y: 0 };
+  public speed : Vec2 = { x: 0, y: 0 };
 
   constructor(options : Partial<HadesOptions>) {
     const defaults : HadesOptions = {
@@ -105,13 +107,22 @@ class Hades {
     // Use the interpolated time to calculate values
     this.timeline.current.x = this.timeline.initial.x + (time * (this.timeline.final.x - this.timeline.initial.x));
     this.timeline.current.y = this.timeline.initial.y + (time * (this.timeline.final.y - this.timeline.initial.y));
-    this.amount.x = this.options.renderByPixel ? Math.round(this.timeline.current.x) : this.timeline.current.x;
-    this.amount.y = this.options.renderByPixel ? Math.round(this.timeline.current.y) : this.timeline.current.y;
+    const currentX = this.timeline.current.x;
+    const currentY = this.timeline.current.y;
+    const roundedCurrentX = Math.round(this.timeline.current.x);
+    const roundedCurrentY = Math.round(this.timeline.current.y);
+    this.amount.x = this.options.renderByPixel ? roundedCurrentX : currentX;
+    this.amount.y = this.options.renderByPixel ? roundedCurrentY : currentY;
     // Apply transformation
     const px = this.options.lockX ? 0 : this.amount.x * -1;
     const py = this.options.lockY ? 0 : this.amount.y * -1;
     const prop = `translateX(${px}px) translateY(${py}px) translateZ(0)`;
     this.options.container.style.transform = prop;
+    // Calculate the speed
+    this.speed.x = Math.abs((currentX - this.prevAmount.x) / delta);
+    this.speed.y = Math.abs((currentY - this.prevAmount.y) / delta);
+    this.prevAmount.x = currentX;
+    this.prevAmount.y = currentY;
     // Reset the initial position of the timeline for the next frame
     this.timeline.initial = this.timeline.current;
   }
@@ -122,12 +133,15 @@ class Hades {
       this.prevDirection.x = event.delta.x > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP;
       this.prevDirection.y = event.delta.y > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP;
     }
+
     // Temporary sum amount
     const tempX = this.internalAmount.x + event.delta.x;
     const tempY = this.internalAmount.y + event.delta.y;
+
     // Clamp the sum amount to be inside the boundries
     this.internalAmount.x = Math.min(Math.max(tempX, this.options.boundries.min.x), this.options.boundries.max.y);
     this.internalAmount.y = Math.min(Math.max(tempY, this.options.boundries.min.y), this.options.boundries.max.y);
+
     // Check the scroll direction
     const currentXDirection = event.delta.x > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP;
     const currentYDirection = event.delta.y > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP;
@@ -137,6 +151,15 @@ class Hades {
     }
     this.prevDirection.x = currentXDirection;
     this.prevDirection.y = currentYDirection;
+    
+    // Emit the event and call the callback
+    if (this.options.emitGlobal) {
+      const eventInit : CustomEventInit = {};
+      eventInit.detail = event;
+      const customEvent : CustomEvent = new CustomEvent('hades-scroll', eventInit);
+      window.dispatchEvent(customEvent);
+    }
+    this.options.callback(event);
   }
 
   private get virtual() {
