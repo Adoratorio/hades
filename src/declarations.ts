@@ -7,6 +7,12 @@ export enum MODE {
   AUTO = 'auto',
 }
 
+export enum DIRECTION {
+  UP = 1,
+  DOWN = -1,
+  INITIAL = 0,
+}
+
 export interface HadesOptions {
   viewport : HTMLElement,
   container : HTMLElement,
@@ -23,6 +29,8 @@ export interface HadesOptions {
   sections : boolean,
   autoplay : boolean,
   aion : Aion | null,
+  touchMultiplier : number,
+  smoothDirectionChange : boolean,
 }
 
 export interface Boundries {

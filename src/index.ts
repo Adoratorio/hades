@@ -3,6 +3,7 @@ import Hermes from '@adoratorio/hermes';
 import { HermesEvent } from '@adoratorio/hermes/dist/declarations';
 import {
   MODE,
+  DIRECTION,
   HadesOptions,
   Boundries,
   Vec2,
@@ -13,6 +14,7 @@ import Easings from "./easing";
 class Hades {
   static EASING = Easings;
   static MODE = MODE;
+  static DIRECTION = DIRECTION;
 
   private options : HadesOptions;
   private viewportRect : DOMRect;
@@ -23,6 +25,7 @@ class Hades {
   private scrollHandler : Function;
   private frameHandler : Function;
   private timeline : Timeline;
+  private prevDirection : Vec2 = { x: Hades.DIRECTION.INITIAL, y: Hades.DIRECTION.INITIAL };
 
   public amount : Vec2 = { x: 0, y: 0 };
 
@@ -43,6 +46,8 @@ class Hades {
       sections: false,
       autoplay: true,
       aion: null,
+      touchMultiplier: 2,
+      smoothDirectionChange: false,
     };
     this.options = { ...defaults, ...options };
     this.timeline = {
@@ -73,6 +78,7 @@ class Hades {
     // Atach and listen to events
     this.manager = new Hermes({
       container: window,
+      touchMultiplier: this.options.touchMultiplier,
     });
     this.manager.on(this.scrollHandler);
 
@@ -111,12 +117,26 @@ class Hades {
   }
 
   private scroll(event : HermesEvent) : void {
+    // Set the first scroll direction
+    if (this.prevDirection.x === Hades.DIRECTION.INITIAL || this.prevDirection.y === Hades.DIRECTION.INITIAL) {
+      this.prevDirection.x = event.delta.x > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP;
+      this.prevDirection.y = event.delta.y > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP;
+    }
     // Temporary sum amount
     const tempX = this.internalAmount.x + event.delta.x;
     const tempY = this.internalAmount.y + event.delta.y;
     // Clamp the sum amount to be inside the boundries
     this.internalAmount.x = Math.min(Math.max(tempX, this.options.boundries.min.x), this.options.boundries.max.y);
     this.internalAmount.y = Math.min(Math.max(tempY, this.options.boundries.min.y), this.options.boundries.max.y);
+    // Check the scroll direction
+    const currentXDirection = event.delta.x > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP;
+    const currentYDirection = event.delta.y > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP;
+    if (!this.options.smoothDirectionChange) {
+      if (currentXDirection !== this.prevDirection.x) this.internalAmount.x = this.amount.x;
+      if (currentYDirection !== this.prevDirection.y) this.internalAmount.y = this.amount.y;
+    }
+    this.prevDirection.x = currentXDirection;
+    this.prevDirection.y = currentYDirection;
   }
 
   private get virtual() {
@@ -129,6 +149,10 @@ class Hades {
       max: { x: xMax, y: yMax }
     };
     return boundries;
+  }
+
+  public get direction() {
+    return this.prevDirection;
   }
 }
 
