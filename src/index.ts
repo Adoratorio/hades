@@ -17,8 +17,6 @@ class Hades {
   static DIRECTION = DIRECTION;
 
   private options : HadesOptions;
-  private viewportRect : DOMRect;
-  private containerRect : DOMRect;
   private engine : Aion;
   private manager : Hermes;
   private internalAmount : Vec2 = { x: 0, y: 0 };
@@ -68,10 +66,6 @@ class Hades {
     if (this.options.container === null || typeof this.options.container === 'undefined') {
       throw new Error('Container cannot be undefined');
     }
-
-    // Initialize apropriate dimensions
-    this.viewportRect = this.options.viewport.getBoundingClientRect() as DOMRect
-    this.containerRect = this.options.container.getBoundingClientRect() as DOMRect;
 
     // Set base css for performance boost
     this.options.container.style.webkitBackfaceVisibility = 'hidden';
