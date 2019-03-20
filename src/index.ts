@@ -111,12 +111,15 @@ class Hades {
     // Use the interpolated time to calculate values
     this.timeline.current.x = this.timeline.initial.x + (time * (this.timeline.final.x - this.timeline.initial.x));
     this.timeline.current.y = this.timeline.initial.y + (time * (this.timeline.final.y - this.timeline.initial.y));
-    const currentX = this.timeline.current.x;
-    const currentY = this.timeline.current.y;
-    const roundedCurrentX = Math.round(this.timeline.current.x);
-    const roundedCurrentY = Math.round(this.timeline.current.y);
-    this.amount.x = this.options.renderByPixel ? roundedCurrentX : currentX;
-    this.amount.y = this.options.renderByPixel ? roundedCurrentY : currentY;
+    const current : Vec2 = {
+      x: this.timeline.current.x,
+      y: this.timeline.current.y,
+    };
+    const roundedCurrent : Vec2 = {
+      x: Math.round(this.timeline.current.x),
+      y: Math.round(this.timeline.current.y),
+    }
+    this.amount = this.options.renderByPixel ? roundedCurrent : current;
 
     // Apply transformation
     const px = this.options.lockX ? 0 : this.amount.x * -1;
@@ -125,10 +128,11 @@ class Hades {
     this.options.container.style.transform = prop;
 
     // Calculate the speed
-    this.speed.x = Math.abs((currentX - this.prevAmount.x) / delta);
-    this.speed.y = Math.abs((currentY - this.prevAmount.y) / delta);
-    this.prevAmount.x = currentX;
-    this.prevAmount.y = currentY;
+    this.speed = {
+      x: Math.abs((current.x - this.prevAmount.x) / delta),
+      y: Math.abs((current.y - this.prevAmount.y) / delta),
+    }
+    this.prevAmount = current;
 
     // Reset the initial position of the timeline for the next frame
     this.timeline.initial = this.timeline.current;
@@ -171,6 +175,14 @@ class Hades {
 
   private get virtual() {
     return this.options.mode === Hades.MODE.VIRTUAL;
+  }
+
+  private get fake() {
+    return this.options.mode === Hades.MODE.FAKE;
+  }
+
+  private get native() {
+    return this.options.mode === Hades.MODE.NATIVE;
   }
 
   public static createBoundries(xMin : number, xMax : number, yMin : number, yMax : number) : Boundries {
