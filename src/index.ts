@@ -71,9 +71,15 @@ class Hades {
     this.options.container.style.webkitBackfaceVisibility = 'hidden';
     this.options.container.style.backfaceVisibility = 'hidden';
 
+    // TODO: Remap the mode to the needed one
+    if (this.options.mode === Hades.MODE.AUTO) {
+      this.options.mode = Hades.MODE.VIRTUAL;
+    }
+
     // Atach and listen to events
     this.manager = new Hermes({
-      container: window,
+      mode: this.options.mode,
+      container: this.options.viewport,
       touchMultiplier: this.options.touchMultiplier,
     });
     this.manager.on(this.scrollHandler);
@@ -119,7 +125,9 @@ class Hades {
     const px = this.options.lockX ? 0 : this.amount.x * -1;
     const py = this.options.lockY ? 0 : this.amount.y * -1;
     const prop = `translateX(${px}px) translateY(${py}px) translateZ(0)`;
-    this.options.container.style.transform = prop;
+    if (this.virtual) {
+      this.options.container.style.transform = prop;
+    }
 
     // Calculate the speed
     this.speed = {
@@ -179,16 +187,16 @@ class Hades {
     return this.options.mode === Hades.MODE.NATIVE;
   }
 
+  public get direction() {
+    return this.prevDirection;
+  }
+
   public static createBoundries(xMin : number, xMax : number, yMin : number, yMax : number) : Boundries {
     const boundries : Boundries = {
       min: { x: xMin, y: yMin },
       max: { x: xMax, y: yMax }
     };
     return boundries;
-  }
-
-  public get direction() {
-    return this.prevDirection;
   }
 }
 
