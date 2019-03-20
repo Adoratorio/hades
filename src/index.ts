@@ -31,6 +31,7 @@ class Hades {
 
   constructor(options : Partial<HadesOptions>) {
     const defaults : HadesOptions = {
+      mode: MODE.VIRTUAL,
       viewport: document.querySelector('.hades-viewport') as HTMLElement,
       container: document.querySelector('.hades-container') as HTMLElement,
       easing: Easings.LINEAR,
@@ -42,7 +43,6 @@ class Hades {
       lockX: true,
       lockY: false,
       boundries: Hades.createBoundries(0, 0, 0, 0),
-      mode: MODE.AUTO,
       sections: false,
       autoplay: true,
       aion: null,
@@ -70,11 +70,6 @@ class Hades {
     // Set base css for performance boost
     this.options.container.style.webkitBackfaceVisibility = 'hidden';
     this.options.container.style.backfaceVisibility = 'hidden';
-
-    // TODO: Remap the mode to the needed one
-    if (this.options.mode === Hades.MODE.AUTO) {
-      this.options.mode = Hades.MODE.VIRTUAL;
-    }
 
     // Atach and listen to events
     this.manager = new Hermes({
@@ -151,9 +146,14 @@ class Hades {
     const tempX = this.internalAmount.x + event.delta.x;
     const tempY = this.internalAmount.y + event.delta.y;
 
-    // Clamp the sum amount to be inside the boundries
-    this.internalAmount.x = Math.min(Math.max(tempX, this.options.boundries.min.x), this.options.boundries.max.y);
-    this.internalAmount.y = Math.min(Math.max(tempY, this.options.boundries.min.y), this.options.boundries.max.y);
+    // Clamp the sum amount to be inside the boundries if not infinite scrolling
+    if (!this.options.infiniteScroll) {
+      this.internalAmount.x = Math.min(Math.max(tempX, this.options.boundries.min.x), this.options.boundries.max.y);
+      this.internalAmount.y = Math.min(Math.max(tempY, this.options.boundries.min.y), this.options.boundries.max.y);
+    } else {
+      this.internalAmount.x = tempX;
+      this.internalAmount.y = tempY;
+    }
 
     // Check the scroll direction
     const currentXDirection = event.delta.x > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP;
@@ -175,15 +175,15 @@ class Hades {
     this.options.callback(event);
   }
 
-  private get virtual() {
+  public get virtual() {
     return this.options.mode === Hades.MODE.VIRTUAL;
   }
 
-  private get fake() {
+  public get fake() {
     return this.options.mode === Hades.MODE.FAKE;
   }
 
-  private get native() {
+  public get native() {
     return this.options.mode === Hades.MODE.NATIVE;
   }
 

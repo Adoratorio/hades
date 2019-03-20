@@ -4,7 +4,6 @@ export enum MODE {
   VIRTUAL = 'virtual',
   FAKE = 'fake',
   NATIVE = 'native',
-  AUTO = 'auto',
 }
 
 export enum DIRECTION {
