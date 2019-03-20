@@ -27,7 +27,7 @@ class Hades {
   private prevAmount : Vec2 = { x: 0, y: 0 };
 
   public amount : Vec2 = { x: 0, y: 0 };
-  public speed : Vec2 = { x: 0, y: 0 };
+  public velocity : Vec2 = { x: 0, y: 0 };
 
   constructor(options : Partial<HadesOptions>) {
     const defaults : HadesOptions = {
@@ -130,7 +130,7 @@ class Hades {
     }
 
     // Calculate the speed
-    this.speed = {
+    this.velocity = {
       x: Math.abs((current.x - this.prevAmount.x) / delta),
       y: Math.abs((current.y - this.prevAmount.y) / delta),
     }
