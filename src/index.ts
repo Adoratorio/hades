@@ -175,6 +175,8 @@ class Hades {
     this.options.callback(event);
   }
 
+  // Common getter for retriving props
+
   public get virtual() {
     return this.options.mode === Hades.MODE.VIRTUAL;
   }
@@ -190,6 +192,22 @@ class Hades {
   public get direction() {
     return this.prevDirection;
   }
+
+  // Common getters for setting option on the fly
+
+  public set easing(easing : Function) {
+    this.options.easing = easing;
+  }
+
+  public set duration(duration : number) {
+    this.options.duration = duration;
+  }
+
+  public set infiniteScroll(infiniteScroll : boolean) {
+    this.options.infiniteScroll = infiniteScroll;
+  }
+
+  // Some utils
 
   public static createBoundries(xMin : number, xMax : number, yMin : number, yMax : number) : Boundries {
     const boundries : Boundries = {
