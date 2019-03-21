@@ -30,6 +30,7 @@ export interface HadesOptions {
   aion : Aion | null,
   touchMultiplier : number,
   smoothDirectionChange : boolean,
+  renderScroll : boolean,
 }
 
 export interface Boundries {

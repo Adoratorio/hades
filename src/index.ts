@@ -48,6 +48,7 @@ class Hades {
       aion: null,
       touchMultiplier: 2,
       smoothDirectionChange: false,
+      renderScroll: true,
     };
     this.options = { ...defaults, ...options };
     this.timeline = {
@@ -120,7 +121,7 @@ class Hades {
     const px = this.options.lockX ? 0 : this.amount.x * -1;
     const py = this.options.lockY ? 0 : this.amount.y * -1;
     const prop = `translateX(${px}px) translateY(${py}px) translateZ(0)`;
-    if (this.virtual) {
+    if (this.virtual && this.options.renderScroll) {
       this.options.container.style.transform = prop;
     }
 
@@ -205,6 +206,26 @@ class Hades {
 
   public set infiniteScroll(infiniteScroll : boolean) {
     this.options.infiniteScroll = infiniteScroll;
+  }
+
+  public set emitGlobal(emitGlobal : boolean) {
+    this.options.emitGlobal = emitGlobal;
+  }
+
+  public set boundries(boundries : Boundries) {
+    this.options.boundries = boundries;
+  }
+
+  public set touchMultiplier(touchMultiplier : number) {
+    this.options.touchMultiplier = touchMultiplier;
+  }
+
+  public set smoothDirectionChange(smoothDirectionChange : boolean) {
+    this.options.smoothDirectionChange = smoothDirectionChange;
+  }
+
+  public set renderScroll(renderScroll : boolean) {
+    this.options.renderScroll = renderScroll;
   }
 
   // Some utils
