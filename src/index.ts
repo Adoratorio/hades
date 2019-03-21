@@ -25,6 +25,7 @@ class Hades {
   private timeline : Timeline;
   private prevDirection : Vec2 = { x: Hades.DIRECTION.INITIAL, y: Hades.DIRECTION.INITIAL };
   private prevAmount : Vec2 = { x: 0, y: 0 };
+  private sections : Array<HTMLElement> = [];
 
   public amount : Vec2 = { x: 0, y: 0 };
   public velocity : Vec2 = { x: 0, y: 0 };
@@ -66,6 +67,12 @@ class Hades {
     }
     if (this.options.container === null || typeof this.options.container === 'undefined') {
       throw new Error('Container cannot be undefined');
+    }
+
+    // If sections are setted load the nodes
+    if (this.virtual && this.options.sections) {
+      const selector = typeof this.options.sections === 'string' ? this.options.sections : '.hades-section';
+      this.sections = Array.from(document.querySelectorAll(selector)) as Array<HTMLElement>;
     }
 
     // Set base css for performance boost
@@ -117,12 +124,31 @@ class Hades {
     }
     this.amount = this.options.renderByPixel ? roundedCurrent : current;
 
-    // Apply transformation
-    const px = this.options.lockX ? 0 : this.amount.x * -1;
-    const py = this.options.lockY ? 0 : this.amount.y * -1;
-    const prop = `translateX(${px}px) translateY(${py}px) translateZ(0)`;
-    if (this.virtual && this.options.renderScroll) {
+    // Apply transformation in case of non section method
+    if (this.virtual && this.options.renderScroll && !this.options.sections) {
+      const px = this.options.lockX ? 0 : this.amount.x * -1;
+      const py = this.options.lockY ? 0 : this.amount.y * -1;
+      const prop = `translateX(${px}px) translateY(${py}px) translateZ(0)`;
       this.options.container.style.transform = prop;
+    }
+
+    // Calculate transform based on prev frame amount and transform if section method
+    if (this.virtual && this.options.sections) {
+      const sectionsHeight : Array<number> = [];
+      this.sections.forEach((section) => sectionsHeight.push(section.getBoundingClientRect().height));
+      this.sections.forEach((section, index) => {
+        const rect = section.getBoundingClientRect();
+        let prevSectionsHeight = 0;
+        for (let i = 0; i < index; i++) prevSectionsHeight += sectionsHeight[i];
+        // Check if we need to translate this section
+        if (
+          this.prevAmount.y > (prevSectionsHeight - window.innerHeight) &&
+          ((prevSectionsHeight + rect.height) - window.innerHeight) > 0
+        ) {
+          const py = this.amount.y * -1;
+          section.style.transform = `translateY(${py}px)`;
+        }
+      });
     }
 
     // Calculate the speed

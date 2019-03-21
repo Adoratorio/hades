@@ -25,7 +25,7 @@ export interface HadesOptions {
   lockY : boolean,
   boundries : Boundries,
   mode : string,
-  sections : boolean,
+  sections : string | boolean,
   autoplay : boolean,
   aion : Aion | null,
   touchMultiplier : number,
