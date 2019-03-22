@@ -52,3 +52,30 @@ with `overflow: hidden` for the **VIRTUAL** mode. In case of the **NATIVE** or *
 
 **autoplay**: Autostart the rendering cycle or not. *deault to: true*
 
+**touchMultiplier**: A multiplier used for touches delta and speed calculations, passed to Hermes. Reasonable values are between 0.8 and 3 but it's just a suggestion. Higher values will increase the feeling of slippery touch effect. *default to: `1.5`*
+
+**smoothDirectionChange**: If true when the scroll direction change the easing setted is kept to help the transition between one direction and the other to feel more interial. On realy smooth easings and high durations this can feel a bit awkward. If false an immediate direction change is applied. *default to: `false`*
+
+**renderScroll**: Wheather or not to apply the actual CSS transform property, if false the internal amount is kept and exposed for your personal use. *default to: `false`*
+
+#### Public properties, getters and setters
+##### Properties
+The Hades instance exposes two main properties:
+
+**amount**: With x and y props exposes the current scroll amount, updated frame-by-frame.
+**velocity**: With x and y props exposes the current scroll speed, updated frame-by-frame.
+
+##### Getters
+**direction**: Get the current direction of the scroll, page mouving up is 1 and page moving down is -1. Enumerators are also exposed with `Hades.DIRECTION.UP`, `Hades.DIRECTION.DOWN` and an inert enum is exposed `Hades.DIRECTION.INITIAL`.
+**virtual**: Get true if mode is setted to virtual or false if not.
+**native**: Get true if mode is setted to native or false if not.
+**fake**: Get true if mode is setted to native or false if not.
+
+##### Setters
+**easing**: Set the easing function, use the constructor param for documentation reference.
+**duration**: Set the duration, use the constructor param for documentation reference.
+**infiniteScroll**: Set if infinite scroll is used or not, use the constructor param for documentation reference.
+**emitGlobal**: Set if global events are emitted or not.
+**touchMultiplier**: Set the touch multiplier passed to Hermes instance.
+**smoothDirectionChange**: Set whether to use smooth direction change or not.
+**renderScroll**: Set if to apply CSS transform or not.
