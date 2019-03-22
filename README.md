@@ -38,4 +38,17 @@ with `overflow: hidden` for the **VIRTUAL** mode. In case of the **NATIVE** or *
 
 **callback**: The function called on each scroll event, the [HadesEvent]() is passed to this function. *default to: `() => {}`*
 
-**renderByPixel**: Used if you want to apply integer rounded values to the css transition units. If not the full value is used instead resulting in maybe a smoother slow animations avoiding that much stattering in particular in the end of the animation, but it's performance consuming. *default to: `false`*
+**renderByPixel**: Used if you want to apply integer rounded values to the css transition units. If not, the full value is used instead, resulting in a smoother animations, especially the slowest ones, avoiding that much stattering in particular in the end of the animation, but it's performance consuming. *default to: `false`*
+
+**lockX**: Lock the x axis when detecting scroll events. *default to: `true`*
+
+**lockY**: Lock the y axis when detecting scroll events. *default to: `false`*
+
+**boundries**: The scroll max and min amount in the x and y axis. An object containing these properties `{ min: { x: 0, y: 0 }, max: { x: 0, y: 0 } }`. A static utility function is exposed as helper to build the object: `Hades.createBoundries(xMin, xMax, yMin, yMax)`. *detault to: Hades.createBoundries(0, 0, 0, 0)*
+
+**sections**: Wheather to use sections tecnique. Pass the CSS to selector for the sections to activate, if active the translate properties are applied to the sections instead of the whole container, using the correct values to make the sections translating only when they should be in viewport and to make them feel as "normal". This is computationally more expensive due to loops, but will gain in gpu performance 'cause the translation is applied to a smaller "surface". *default to: `false`*
+
+**aion**: The Aion instance to use within to perform animations and per-frame operations. If passed this instance will be used, instead a new one is created. *default to: null*
+
+**autoplay**: Autostart the rendering cycle or not. *deault to: true*
+
