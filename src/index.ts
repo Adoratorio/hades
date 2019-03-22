@@ -202,6 +202,15 @@ class Hades {
     this.options.callback(event);
   }
 
+  public scrollTo(position : Vec2, imediate : boolean = false) {
+    this.internalAmount.x = position.x;
+    this.internalAmount.y = position.y;
+    if (imediate) {
+      this.amount.x = position.x;
+      this.amount.y = position.y;
+    }
+  }
+
   // Common getter for retriving props
 
   public get virtual() {
