@@ -1,8 +1,11 @@
 {
   "name": "@adoratorio/hades",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "A smooth scrollbar based on Hermes, scroll down 'till hell",
   "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist/**/*"],
   "scripts": {
     "build": "rm -rf dist && mkdir dist && tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -21,9 +24,9 @@
   ],
   "author": "Adoratorio <contact@adoratorio.com>",
   "contributors": [
-    "Tommaso Algozzino <tommaso@adoratorio.com>",
     "Andrea Gottardi <andrea@adoratorio.com>",
-    "Daniele Borra <daniele@adoratorio.com>"
+    "Daniele Borra <daniele@adoratorio.com>",
+    "Tommaso Algozzino <tommaso@adoratorio.com>"
   ],
   "license": "MIT",
   "bugs": {
