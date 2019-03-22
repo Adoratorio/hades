@@ -47,7 +47,7 @@ class Hades {
       sections: false,
       autoplay: true,
       aion: null,
-      touchMultiplier: 2,
+      touchMultiplier: 1.5,
       smoothDirectionChange: false,
       renderScroll: true,
     };
