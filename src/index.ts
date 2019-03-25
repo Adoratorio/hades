@@ -26,6 +26,8 @@ class Hades {
   private prevDirection : Vec2 = { x: Hades.DIRECTION.INITIAL, y: Hades.DIRECTION.INITIAL };
   private prevAmount : Vec2 = { x: 0, y: 0 };
   private sections : Array<HTMLElement> = [];
+  private automaticScrolling : boolean = false;
+  private imediateScrolling : boolean = false;
 
   public amount : Vec2 = { x: 0, y: 0 };
   public velocity : Vec2 = { x: 0, y: 0 };
@@ -108,6 +110,12 @@ class Hades {
     // Normalize the delta to be 0 - 1
     let time = delta / this.timeline.duration;
 
+    // Check if the frame is imediate
+    if (this.imediateScrolling) {
+      time = 1;
+      this.imediateScrolling = false;
+    }
+
     // Get the interpolated time
     time = this.options.easing(time);
 
@@ -163,6 +171,13 @@ class Hades {
   }
 
   private scroll(event : HermesEvent) : void {
+    // Reset from the scroll to if needed
+    if (this.automaticScrolling) {
+      this.timeline.duration = this.options.duration;
+      this.amount = this.prevAmount;
+      this.automaticScrolling = false;
+    }
+
     // Set the first scroll direction
     if (this.prevDirection.x === Hades.DIRECTION.INITIAL || this.prevDirection.y === Hades.DIRECTION.INITIAL) {
       this.prevDirection.x = event.delta.x > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP;
@@ -202,12 +217,22 @@ class Hades {
     this.options.callback(event);
   }
 
-  public scrollTo(position : Vec2, imediate : boolean = false) {
-    this.internalAmount.x = position.x;
-    this.internalAmount.y = position.y;
-    if (imediate) {
-      this.amount.x = position.x;
-      this.amount.y = position.y;
+  public scrollTo(position : Vec2, duration : number) {
+    if (this.virtual) {
+      if (duration > 0) {
+        this.automaticScrolling = true;
+        this.timeline.duration = duration;
+      } else {
+        this.imediateScrolling = true;
+      }
+      this.internalAmount.x = position.x;
+      this.internalAmount.y = position.y;
+    } else {
+      this.options.viewport.scroll({
+        left: position.x,
+        top: position.y,
+        behavior: duration === 0 ? 'auto' : 'smooth',
+      });
     }
   }
 
