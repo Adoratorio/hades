@@ -31,6 +31,7 @@ class Hades {
 
   public amount : Vec2 = { x: 0, y: 0 };
   public velocity : Vec2 = { x: 0, y: 0 };
+  public running : boolean = false;
 
   constructor(options : Partial<HadesOptions>) {
     const defaults : HadesOptions = {
@@ -90,13 +91,14 @@ class Hades {
     this.manager.on(this.scrollHandler);
 
     // Check and initialize Aion
+    if (this.options.autoplay) this.running = true;
     if (this.options.aion === null || typeof this.options.aion === 'undefined') {
       this.engine = new Aion();
     } else {
       this.engine = this.options.aion;
     }
     this.engine.add(this.frameHandler, 'hades_frame');
-    if (this.options.autoplay) this.engine.start();
+    this.engine.start();
   }
 
   private frame(delta : number) : void {
@@ -171,6 +173,9 @@ class Hades {
   }
 
   private scroll(event : HermesEvent) : void {
+    // Return if is stopped
+    if (!this.running) return;
+
     // Reset from the scroll to if needed
     if (this.automaticScrolling) {
       this.timeline.duration = this.options.duration;
@@ -234,6 +239,14 @@ class Hades {
         behavior: duration === 0 ? 'auto' : 'smooth',
       });
     }
+  }
+
+  public play() {
+    this.running = true;
+  }
+
+  public pause() {
+    this.running = false;
   }
 
   // Common getter for retriving props
