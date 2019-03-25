@@ -47,6 +47,7 @@ class Hades {
       lockX: true,
       lockY: false,
       boundries: Hades.createBoundries(0, 0, 0, 0),
+      autoBoundries: true,
       sections: false,
       autoplay: true,
       aion: null,
@@ -102,6 +103,18 @@ class Hades {
   }
 
   private frame(delta : number) : void {
+    // If boundires are autosetted use the container dimensions
+    if (this.options.autoBoundries) {
+      const containerRect = this.options.container.getBoundingClientRect();
+      const viewportRect = this.options.viewport.getBoundingClientRect();
+      this.options.boundries = Hades.createBoundries(
+        0,
+        containerRect.width < viewportRect.width ? 0 : containerRect.width - viewportRect.width,
+        0,
+        containerRect.height < viewportRect.height ? 0 : containerRect.height - viewportRect.height,
+      );
+    }
+
     // Get the new final value
     this.timeline.final.x = this.internalAmount.x;
     this.timeline.final.y = this.internalAmount.y;
