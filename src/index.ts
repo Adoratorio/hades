@@ -249,6 +249,13 @@ class Hades {
     this.running = false;
   }
 
+  public destroy() {
+    this.manager.destroy();
+    this.engine.remove('hades_frame');
+    delete this.manager;
+    delete this.engine;
+  }
+
   // Common getter for retriving props
 
   public get virtual() {
