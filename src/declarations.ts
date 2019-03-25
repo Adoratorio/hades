@@ -24,6 +24,7 @@ export interface HadesOptions {
   lockX : boolean,
   lockY : boolean,
   boundries : Boundries,
+  autoBoundries : boolean,
   mode : string,
   sections : string | boolean,
   autoplay : boolean,
