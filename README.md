@@ -43,24 +43,64 @@ When instantiated the constructor take the following options
 |smoothDirectionChange|`boolean`|`false`|If true when the scroll direction change the easing setted is kept to help the transition between one direction and the other to feel more interial. On realy smooth easings and high durations this can feel a bit awkward. If false an immediate direction change is applied.|
 |renderScroll|`boolean`|`false`|Wheather or not to apply the actual CSS transform property, if false the internal amount is kept and exposed for your personal use.|
 
-### Public properties, getters and setters
-#### Properties
+## APIs
+### Static Methods
+#### Hades.createBoundries(xMin, xMax, yMin, yMax)
+```typescript
+Hades.createBoundires(xMin: number, xMax: number, yMin: number, yMax: number): Boundries
+```
+Create an object suitable for scrollbar boundries.
+
+### Instance Properties
 The Hades instance exposes two main properties:
 
-**amount**: With x and y props exposes the current scroll amount, updated frame-by-frame.
-**velocity**: With x and y props exposes the current scroll speed, updated frame-by-frame.
+#### amount 
+• Type: `interface Vec2 { x:number, y:number }`
+With x and y props exposes the current scroll amount, updated frame-by-frame.
 
-#### Getters
-**direction**: Get the current direction of the scroll, page mouving up is 1 and page moving down is -1. Enumerators are also exposed with `Hades.DIRECTION.UP`, `Hades.DIRECTION.DOWN` and an inert enum is exposed `Hades.DIRECTION.INITIAL`.
-**virtual**: Get true if mode is setted to virtual or false if not.
-**native**: Get true if mode is setted to native or false if not.
-**fake**: Get true if mode is setted to native or false if not.
+#### velocity
+• Type: `interface Vec2 { x:number, y:number }`
+With x and y props exposes the current scroll speed, updated frame-by-frame.
 
-#### Setters
-**easing**: Set the easing function, use the constructor param for documentation reference.
-**duration**: Set the duration, use the constructor param for documentation reference.
-**infiniteScroll**: Set if infinite scroll is used or not, use the constructor param for documentation reference.
-**emitGlobal**: Set if global events are emitted or not.
-**touchMultiplier**: Set the touch multiplier passed to Hermes instance.
-**smoothDirectionChange**: Set whether to use smooth direction change or not.
-**renderScroll**: Set if to apply CSS transform or not.
+### Instance Getters
+#### direction
+• Type `number`
+Get the current direction of the scroll, page mouving up is 1 and page moving down is -1. Enumerators are also exposed with `Hades.DIRECTION.UP`, `Hades.DIRECTION.DOWN` and an inert enum is exposed `Hades.DIRECTION.INITIAL`.
+#### virtual
+• Type `boolean`
+Get true if mode is setted to virtual or false if not.
+#### native
+• Type `boolean`
+Get true if mode is setted to native or false if not.
+#### fake
+• Type `boolean`
+Get true if mode is setted to native or false if not.
+
+### Instance Setters
+#### easing
+• Type `Function`
+Set the easing function, use the constructor param for documentation reference.
+
+#### duration
+• Type `number`
+Set the duration, use the constructor param for documentation reference.
+
+#### infiniteScroll
+• Type `boolean`
+Set if infinite scroll is used or not, use the constructor param for documentation reference.
+
+#### emitGlobal
+• Type `boolean`
+Set if global events are emitted or not.
+
+#### touchMultiplier
+• Type `number`
+Set the touch multiplier passed to Hermes instance.
+
+#### smoothDirectionChange
+• Type `boolean`
+Set whether to use smooth direction change or not.
+
+#### renderScroll
+• Type `boolean`
+Set if to apply CSS transform or not.
