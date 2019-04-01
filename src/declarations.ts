@@ -15,8 +15,7 @@ export enum DIRECTION {
 export interface HadesOptions {
   viewport : HTMLElement,
   container : HTMLElement,
-  easing : Function,
-  duration : number,
+  easing : Easing,
   infiniteScroll: boolean,
   emitGlobal : boolean,
   callback : Function,
@@ -50,4 +49,9 @@ export interface Timeline {
   initial : Vec2,
   final : Vec2,
   current : Vec2,
+}
+
+export interface Easing {
+  mode : Function,
+  duration : number,
 }

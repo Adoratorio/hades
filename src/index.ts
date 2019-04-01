@@ -8,6 +8,7 @@ import {
   Boundries,
   Vec2,
   Timeline,
+  Easing,
 } from "./declarations";
 import Easings from "./easing";
 
@@ -16,10 +17,11 @@ class Hades {
   static MODE = MODE;
   static DIRECTION = DIRECTION;
 
+  private _amount : Vec2 = { x: 0, y: 0 };
+
   private options : HadesOptions;
   private engine : Aion;
   private manager : Hermes;
-  private internalAmount : Vec2 = { x: 0, y: 0 };
   private scrollHandler : Function;
   private frameHandler : Function;
   private timeline : Timeline;
@@ -38,8 +40,10 @@ class Hades {
       mode: MODE.VIRTUAL,
       viewport: document.querySelector('.hades-viewport') as HTMLElement,
       container: document.querySelector('.hades-container') as HTMLElement,
-      easing: Easings.LINEAR,
-      duration: 1000,
+      easing: {
+        mode: Easings.LINEAR,
+        duration: 1000,
+      },
       infiniteScroll: false,
       emitGlobal: true,
       callback: () => {},
@@ -58,7 +62,7 @@ class Hades {
     this.options = { ...defaults, ...options };
     this.timeline = {
       start: 0,
-      duration: this.options.duration,
+      duration: this.options.easing.duration,
       initial: { x: 0, y: 0 },
       final: { x: 0, y: 0 },
       current: { x: 0, y: 0 },
@@ -116,11 +120,11 @@ class Hades {
     }
 
     // Get the new final value
-    this.timeline.final.x = this.internalAmount.x;
-    this.timeline.final.y = this.internalAmount.y;
+    this.timeline.final.x = this._amount.x;
+    this.timeline.final.y = this._amount.y;
 
     // Normalize delta based on duration
-    delta = Math.min(Math.max(delta, 0), this.options.duration);
+    delta = Math.min(Math.max(delta, 0), this.options.easing.duration);
 
     // Normalize the delta to be 0 - 1
     let time = delta / this.timeline.duration;
@@ -132,7 +136,7 @@ class Hades {
     }
 
     // Get the interpolated time
-    time = this.options.easing(time);
+    time = this.options.easing.mode(time);
 
     // Use the interpolated time to calculate values
     this.timeline.current.x = this.timeline.initial.x + (time * (this.timeline.final.x - this.timeline.initial.x));
@@ -191,7 +195,7 @@ class Hades {
 
     // Reset from the scroll to if needed
     if (this.automaticScrolling) {
-      this.timeline.duration = this.options.duration;
+      this.timeline.duration = this.options.easing.duration;
       this.amount = this.prevAmount;
       this.automaticScrolling = false;
     }
@@ -203,24 +207,24 @@ class Hades {
     }
 
     // Temporary sum amount
-    const tempX = this.internalAmount.x + event.delta.x;
-    const tempY = this.internalAmount.y + event.delta.y;
+    const tempX = this._amount.x + event.delta.x;
+    const tempY = this._amount.y + event.delta.y;
 
     // Clamp the sum amount to be inside the boundries if not infinite scrolling
     if (!this.options.infiniteScroll) {
-      this.internalAmount.x = Math.min(Math.max(tempX, this.options.boundries.min.x), this.options.boundries.max.y);
-      this.internalAmount.y = Math.min(Math.max(tempY, this.options.boundries.min.y), this.options.boundries.max.y);
+      this._amount.x = Math.min(Math.max(tempX, this.options.boundries.min.x), this.options.boundries.max.y);
+      this._amount.y = Math.min(Math.max(tempY, this.options.boundries.min.y), this.options.boundries.max.y);
     } else {
-      this.internalAmount.x = tempX;
-      this.internalAmount.y = tempY;
+      this._amount.x = tempX;
+      this._amount.y = tempY;
     }
 
     // Check the scroll direction
     const currentXDirection = event.delta.x > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP;
     const currentYDirection = event.delta.y > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP;
     if (!this.options.smoothDirectionChange) {
-      if (currentXDirection !== this.prevDirection.x) this.internalAmount.x = this.amount.x;
-      if (currentYDirection !== this.prevDirection.y) this.internalAmount.y = this.amount.y;
+      if (currentXDirection !== this.prevDirection.x) this._amount.x = this.amount.x;
+      if (currentYDirection !== this.prevDirection.y) this._amount.y = this.amount.y;
     }
     this.prevDirection.x = currentXDirection;
     this.prevDirection.y = currentYDirection;
@@ -243,8 +247,8 @@ class Hades {
       } else {
         this.imediateScrolling = true;
       }
-      this.internalAmount.x = position.x;
-      this.internalAmount.y = position.y;
+      this._amount.x = position.x;
+      this._amount.y = position.y;
     } else {
       this.options.viewport.scroll({
         left: position.x,
@@ -289,12 +293,8 @@ class Hades {
 
   // Common getters for setting option on the fly
 
-  public set easing(easing : Function) {
+  public set easing(easing : Easing) {
     this.options.easing = easing;
-  }
-
-  public set duration(duration : number) {
-    this.options.duration = duration;
   }
 
   public set infiniteScroll(infiniteScroll : boolean) {
