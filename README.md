@@ -35,20 +35,13 @@ When instantiated the constructor take the following options
 |renderByPixel|`boolean`|`false`|Used if you want to apply integer rounded values to the css transition units. If not, the full value is used instead, resulting in a smoother animations, especially the slowest ones, avoiding that much stattering in particular in the end of the animation, but it's performance consuming.|✔️|
 |lockX|`boolean`|`true`|Lock the x axis when detecting scroll events.|✔️|
 |lockY|`boolean`|`false`|Lock the y axis when detecting scroll events.|✔️|
-
-**boundries**: The scroll max and min amount in the x and y axis. An object containing these properties `{ min: { x: 0, y: 0 }, max: { x: 0, y: 0 } }`. A static utility function is exposed as helper to build the object: `Hades.createBoundries(xMin, xMax, yMin, yMax)`. *detault to: Hades.createBoundries(0, 0, 0, 0)* **_only in VIRTUAL mode_**
-
-**sections**: Wheather to use sections tecnique. Pass the CSS to selector for the sections to activate, if active the translate properties are applied to the sections instead of the whole container, using the correct values to make the sections translating only when they should be in viewport and to make them feel as "normal". This is computationally more expensive due to loops, but will gain in gpu performance 'cause the translation is applied to a smaller "surface". *default to: `false`* **_only in VIRTUAL mode_**
-
-**aion**: The Aion instance to use within to perform animations and per-frame operations. If passed this instance will be used, instead a new one is created. *default to: null* **_only in VIRTUAL mode_**
-
-**autoplay**: Autostart the rendering cycle or not. *deault to: true* **_only in VIRTUAL mode_**
-
-**touchMultiplier**: A multiplier used for touches delta and speed calculations, passed to Hermes. Reasonable values are between 0.8 and 3 but it's just a suggestion. Higher values will increase the feeling of slippery touch effect. *default to: `1.5`* **_only in VIRTUAL mode_**
-
-**smoothDirectionChange**: If true when the scroll direction change the easing setted is kept to help the transition between one direction and the other to feel more interial. On realy smooth easings and high durations this can feel a bit awkward. If false an immediate direction change is applied. *default to: `false`* **_only in VIRTUAL mode_**
-
-**renderScroll**: Wheather or not to apply the actual CSS transform property, if false the internal amount is kept and exposed for your personal use. *default to: `false`* **_only in VIRTUAL mode_**
+|boundries|`{ min: { x: 0, y:0 }, max: { x: 0, y: 0 } }`|`Hades.createBoundries(xMin, xMax, yMin, yMax)`|The scroll max and min amount in the x and y axis. An object containing these properties `{ min: { x: 0, y: 0 }, max: { x: 0, y: 0 } }`. A static utility function is exposed as helper to build the object: `Hades.createBoundries(xMin, xMax, yMin, yMax)`.|✔️|
+|sections|`boolean | string`|`false`|Wheather to use sections tecnique. Pass the CSS to selector for the sections to activate, if active the translate properties are applied to the sections instead of the whole container, using the correct values to make the sections translating only when they should be in viewport and to make them feel as "normal". This is computationally more expensive due to loops, but will gain in gpu performance 'cause the translation is applied to a smaller "surface".|✔️|
+|aion|`Aion | null`|`null`|The Aion instance to use within to perform animations and per-frame operations. If passed this instance will be used, instead a new one is created.|✔️|
+|autoplay|`boolean`|`true`|Autostart the rendering cycle or not.|✔️|
+|touchMultiplier|`number`|`1.5`|A multiplier used for touches delta and speed calculations, passed to Hermes. Reasonable values are between 0.8 and 3 but it's just a suggestion. Higher values will increase the feeling of slippery touch effect.|✔️|
+|smoothDirectionChange|`boolean`|`false`|If true when the scroll direction change the easing setted is kept to help the transition between one direction and the other to feel more interial. On realy smooth easings and high durations this can feel a bit awkward. If false an immediate direction change is applied.|✔️|
+|renderScroll|`boolean`|`false`|Wheather or not to apply the actual CSS transform property, if false the internal amount is kept and exposed for your personal use.|✔️|
 
 ### Public properties, getters and setters
 #### Properties
