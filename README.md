@@ -1,7 +1,7 @@
-### Hades
+## Hades
 A smooth scrollbar with optional native scroll or section implementation for performance boosting
 
-#### Installation and usage
+### Installation and usage
 Hades is written in typescript and available as npm package with the alongside types definitions. So install as always
 
 ```sh
@@ -58,20 +58,20 @@ with `overflow: hidden` for the **VIRTUAL** mode. In case of the **NATIVE** or *
 
 **renderScroll**: Wheather or not to apply the actual CSS transform property, if false the internal amount is kept and exposed for your personal use. *default to: `false`* **_only in VIRTUAL mode_**
 
-#### Public properties, getters and setters
-##### Properties
+### Public properties, getters and setters
+#### Properties
 The Hades instance exposes two main properties:
 
 **amount**: With x and y props exposes the current scroll amount, updated frame-by-frame.
 **velocity**: With x and y props exposes the current scroll speed, updated frame-by-frame.
 
-##### Getters
+#### Getters
 **direction**: Get the current direction of the scroll, page mouving up is 1 and page moving down is -1. Enumerators are also exposed with `Hades.DIRECTION.UP`, `Hades.DIRECTION.DOWN` and an inert enum is exposed `Hades.DIRECTION.INITIAL`.
 **virtual**: Get true if mode is setted to virtual or false if not.
 **native**: Get true if mode is setted to native or false if not.
 **fake**: Get true if mode is setted to native or false if not.
 
-##### Setters
+#### Setters
 **easing**: Set the easing function, use the constructor param for documentation reference.
 **duration**: Set the duration, use the constructor param for documentation reference.
 **infiniteScroll**: Set if infinite scroll is used or not, use the constructor param for documentation reference.
