@@ -108,7 +108,7 @@ class Hades {
 
   private frame(delta : number) : void {
     // If boundires are autosetted use the container dimensions
-    if (this.options.autoBoundries) {
+    if (this.virtual && this.options.autoBoundries) {
       const containerRect = this.options.container.getBoundingClientRect();
       const viewportRect = this.options.viewport.getBoundingClientRect();
       this.options.boundries = Hades.createBoundries(
