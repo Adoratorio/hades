@@ -63,7 +63,7 @@ class Hades {
       smoothDirectionChange: false,
       renderScroll: true,
       scrollbar: {
-        tracks: [TRACK.X, TRACK.Y],
+        tracks: [TRACK.Y],
       },
     };
     this.options = { ...defaults, ...options };
@@ -110,7 +110,7 @@ class Hades {
       this.engine = this.options.aion;
     }
 
-    if (this.options.scrollbar !== null) {
+    if (this.options.scrollbar !== null && this.options.mode === Hades.MODE.VIRTUAL) {
       this.scrollbar = new Scrollbar(this.options.scrollbar, this, this.options.viewport);
     }
 
