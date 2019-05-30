@@ -12,6 +12,11 @@ export enum DIRECTION {
   INITIAL = 0,
 }
 
+export enum TRACK {
+  X = 'x',
+  Y = 'y',
+}
+
 export interface HadesOptions {
   viewport : HTMLElement,
   container : HTMLElement,
@@ -31,6 +36,7 @@ export interface HadesOptions {
   touchMultiplier : number,
   smoothDirectionChange : boolean,
   renderScroll : boolean,
+  scrollbar : ScrollbarOptions | null,
 }
 
 export interface Boundries {
@@ -54,4 +60,16 @@ export interface Timeline {
 export interface Easing {
   mode : Function,
   duration : number,
+}
+
+export interface Track {
+  wrapper: HTMLElement | null,
+  thumb: HTMLElement | null,
+  thumbSize: number,
+  ratio: number,
+  drag: boolean,
+}
+
+export interface ScrollbarOptions {
+  tracks : Array<TRACK>, 
 }
