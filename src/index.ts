@@ -4,6 +4,7 @@ import { HermesEvent } from '@adoratorio/hermes/dist/declarations';
 import {
   MODE,
   DIRECTION,
+  TRACK,
   HadesOptions,
   Boundries,
   Vec2,
@@ -11,11 +12,13 @@ import {
   Easing,
 } from "./declarations";
 import Easings from "./easing";
+import Scrollbar from "./scrollbar";
 
 class Hades {
   static EASING = Easings;
   static MODE = MODE;
   static DIRECTION = DIRECTION;
+  static TRACK = TRACK;
 
   private _amount : Vec2 = { x: 0, y: 0 };
 
@@ -30,6 +33,7 @@ class Hades {
   private sections : Array<HTMLElement> = [];
   private automaticScrolling : boolean = false;
   private imediateScrolling : boolean = false;
+  private scrollbar : Scrollbar | null = null;
 
   public amount : Vec2 = { x: 0, y: 0 };
   public velocity : Vec2 = { x: 0, y: 0 };
@@ -58,6 +62,9 @@ class Hades {
       touchMultiplier: 1.5,
       smoothDirectionChange: false,
       renderScroll: true,
+      scrollbar: {
+        tracks: [TRACK.X, TRACK.Y],
+      },
     };
     this.options = { ...defaults, ...options };
     this.timeline = {
@@ -102,15 +109,20 @@ class Hades {
     } else {
       this.engine = this.options.aion;
     }
+
+    if (this.options.scrollbar !== null) {
+      this.scrollbar = new Scrollbar(this.options.scrollbar, this, this.options.viewport);
+    }
+
     this.engine.add(this.frameHandler, 'hades_frame');
     this.engine.start();
   }
 
   private frame(delta : number) : void {
     // If boundires are autosetted use the container dimensions
-    if (this.virtual && this.options.autoBoundries) {
+    if (this.options.autoBoundries) {
       const containerRect = this.options.container.getBoundingClientRect();
-      const viewportRect = this.options.viewport.getBoundingClientRect();
+      const viewportRect = this.virtual ? this.options.viewport.getBoundingClientRect() : { width: window.innerWidth, height: window.innerHeight };
       this.options.boundries = Hades.createBoundries(
         0,
         containerRect.width < viewportRect.width ? 0 : containerRect.width - viewportRect.width,
@@ -185,6 +197,11 @@ class Hades {
     }
     this.prevAmount = current;
 
+    // Update scrollbar tracks
+    if (this.options.scrollbar !== null && this.scrollbar !== null) {
+      this.scrollbar.listen(this.amount);
+    }
+
     // Reset the initial position of the timeline for the next frame
     this.timeline.initial = this.timeline.current;
   }
@@ -212,7 +229,7 @@ class Hades {
 
     // Clamp the sum amount to be inside the boundries if not infinite scrolling
     if (!this.options.infiniteScroll) {
-      this._amount.x = Math.min(Math.max(tempX, this.options.boundries.min.x), this.options.boundries.max.y);
+      this._amount.x = Math.min(Math.max(tempX, this.options.boundries.min.x), this.options.boundries.max.x);
       this._amount.y = Math.min(Math.max(tempY, this.options.boundries.min.y), this.options.boundries.max.y);
     } else {
       this._amount.x = tempX;
@@ -239,7 +256,7 @@ class Hades {
     this.options.callback(event);
   }
 
-  public scrollTo(position : Vec2, duration : number) {
+  public scrollTo(position : Partial<Vec2>, duration : number) {
     if (this.virtual) {
       if (duration > 0) {
         this.automaticScrolling = true;
@@ -247,15 +264,15 @@ class Hades {
       } else {
         this.imediateScrolling = true;
       }
-      this._amount.x = position.x;
-      this._amount.y = position.y;
     } else {
-      this.options.viewport.scroll({
+      window.scroll({
         left: position.x,
         top: position.y,
         behavior: duration === 0 ? 'auto' : 'smooth',
       });
     }
+    if (typeof position.x !== 'undefined') this._amount.x = position.x;
+    if (typeof position.y !== 'undefined') this._amount.y = position.y;
   }
 
   public play() {
@@ -267,8 +284,10 @@ class Hades {
   }
 
   public destroy() {
+    if (this.scrollbar !== null) this.scrollbar.destroy();
     this.manager.destroy();
     this.engine.remove('hades_frame');
+
     delete this.manager;
     delete this.engine;
   }
@@ -289,6 +308,10 @@ class Hades {
 
   public get direction() {
     return this.prevDirection;
+  }
+
+  public get boundries() {
+    return this.options.boundries;
   }
 
   // Common getters for setting option on the fly
