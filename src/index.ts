@@ -65,6 +65,7 @@ class Hades {
       scrollbar: {
         tracks: [TRACK.Y],
       },
+      scale: 1,
     };
     this.options = { ...defaults, ...options };
     this.timeline = {
@@ -216,6 +217,10 @@ class Hades {
       this.amount = this.prevAmount;
       this.automaticScrolling = false;
     }
+
+    // Multiply the scroll by the options multiplier
+    event.delta.x = event.delta.x * this.options.scale;
+    event.delta.y = event.delta.x * this.options.scale;
 
     // Set the first scroll direction
     if (this.prevDirection.x === Hades.DIRECTION.INITIAL || this.prevDirection.y === Hades.DIRECTION.INITIAL) {
