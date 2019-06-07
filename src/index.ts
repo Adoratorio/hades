@@ -220,7 +220,7 @@ class Hades {
 
     // Multiply the scroll by the options multiplier
     event.delta.x = event.delta.x * this.options.scale;
-    event.delta.y = event.delta.x * this.options.scale;
+    event.delta.y = event.delta.y * this.options.scale;
 
     // Set the first scroll direction
     if (this.prevDirection.x === Hades.DIRECTION.INITIAL || this.prevDirection.y === Hades.DIRECTION.INITIAL) {
