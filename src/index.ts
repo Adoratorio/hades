@@ -335,6 +335,12 @@ class Hades {
 
   public set boundries(boundries : Boundries) {
     this.options.boundries = boundries;
+    if (this._amount.y > this.options.boundries.max.y) {
+      this.scrollTo({ y: this.options.boundries.max.y }, 0);
+    }
+    if (this._amount.x > this.options.boundries.max.x) {
+      this.scrollTo({ x: this.options.boundries.max.x }, 0);
+    }
   }
 
   public set touchMultiplier(touchMultiplier : number) {
