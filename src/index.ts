@@ -34,10 +34,13 @@ class Hades {
   private automaticScrolling : boolean = false;
   private imediateScrolling : boolean = false;
   private scrollbar : Scrollbar | null = null;
+  private stopNeedEmission : boolean = false;
+  private startNeedEmission : boolean = true;
 
   public amount : Vec2 = { x: 0, y: 0 };
   public velocity : Vec2 = { x: 0, y: 0 };
   public running : boolean = false;
+  public still : boolean = true;
 
   constructor(options : Partial<HadesOptions>) {
     const defaults : HadesOptions = {
@@ -196,7 +199,27 @@ class Hades {
       x: Math.abs((current.x - this.prevAmount.x) / delta),
       y: Math.abs((current.y - this.prevAmount.y) / delta),
     }
+    // Use 4 digits precision
+    this.velocity.x = parseFloat(this.velocity.x.toFixed(4));
+    this.velocity.y = parseFloat(this.velocity.y.toFixed(4));
     this.prevAmount = current;
+
+    // Check if the scroll is still animating or not
+    if (this.velocity.y === 0 && this.velocity.x === 0) {
+      this.still = true;
+      if (this.stopNeedEmission) {
+        this.emitStillChange('stop');
+        this.stopNeedEmission = false;
+        this.startNeedEmission = true;
+      }
+    } else {
+      this.still = false;
+      if (this.startNeedEmission) {
+        this.emitStillChange('start');
+        this.startNeedEmission = false;
+        this.stopNeedEmission = true;
+      }
+    }
 
     // Update scrollbar tracks
     if (this.options.scrollbar !== null && this.scrollbar !== null) {
@@ -259,6 +282,14 @@ class Hades {
       window.dispatchEvent(customEvent);
     }
     this.options.callback(event);
+  }
+
+  private emitStillChange(type : string) {
+    if (this.options.emitGlobal) {
+      const eventInit : CustomEventInit = {};
+      const customEvent : CustomEvent = new CustomEvent(`hades-${type}`, eventInit);
+      window.dispatchEvent(customEvent);
+    }
   }
 
   public scrollTo(position : Partial<Vec2>, duration : number) {
