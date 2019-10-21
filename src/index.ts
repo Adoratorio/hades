@@ -81,7 +81,7 @@ class Hades {
     this.scrollHandler = (event : HermesEvent) => this.scroll(event);
     this.frameHandler = (delta : number) => this.frame(delta);
 
-    if (this.options.container === null || typeof this.options.viewport === 'undefined') {
+    if (this.options.viewport === null || typeof this.options.viewport === 'undefined') {
       throw new Error('Viewport cannot be undefined');
     }
     if (this.options.container === null || typeof this.options.container === 'undefined') {
