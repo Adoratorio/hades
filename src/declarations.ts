@@ -38,6 +38,7 @@ export interface HadesOptions {
   renderScroll : boolean,
   scrollbar : ScrollbarOptions | null,
   scale : number,
+  uniqueDirection : boolean,
 }
 
 export interface Boundries {
