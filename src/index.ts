@@ -69,6 +69,7 @@ class Hades {
         tracks: [TRACK.Y],
       },
       scale: 1,
+      uniqueDirection: false,
     };
     this.options = { ...defaults, ...options };
     this.timeline = {
@@ -242,7 +243,7 @@ class Hades {
     }
 
     // Multiply the scroll by the options multiplier
-    event.delta.x = event.delta.x * this.options.scale;
+    event.delta.x = this.options.uniqueDirection ? (event.delta.x || event.delta.y) * this.options.scale : event.delta.x * this.options.scale;
     event.delta.y = event.delta.y * this.options.scale;
 
     // Set the first scroll direction
