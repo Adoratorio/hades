@@ -119,7 +119,7 @@ class Scrollbar {
 
       const translate = (width - this.trackX.thumbSize) * ratio;
 
-      this.trackX.thumb.style.transform = `translate3d(${translate}px, 0, 0)`;
+      this.trackX.thumb.style.transform = `translate3d(${translate}px, 0px, 0px)`;
 
       if (ratio === this.trackX.ratio) {
         this.trackX.wrapper.classList.remove('show');
@@ -135,7 +135,7 @@ class Scrollbar {
 
       const translate = (height - this.trackY.thumbSize) * ratio;
 
-      this.trackY.thumb.style.transform = `translate3d(0, ${translate}px, 0)`;
+      this.trackY.thumb.style.transform = `translate3d(0px, ${translate}px, 0px)`;
 
       if (ratio === this.trackY.ratio) {
         this.trackY.wrapper.classList.remove('show');

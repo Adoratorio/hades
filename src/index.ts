@@ -171,7 +171,7 @@ class Hades {
     if (this.virtual && this.options.renderScroll && !this.options.sections) {
       const px = this.options.lockX ? 0 : this.amount.x * -1;
       const py = this.options.lockY ? 0 : this.amount.y * -1;
-      const prop = `translateX(${px}px) translateY(${py}px) translateZ(0)`;
+      const prop = `translate3d(${px}px, ${py}px, 0px)`;
       this.options.container.style.transform = prop;
     }
 
@@ -189,7 +189,7 @@ class Hades {
           ((prevSectionsHeight + rect.height) - window.innerHeight) > 0
         ) {
           const py = this.amount.y * -1;
-          section.style.transform = `translateY(${py}px)`;
+          section.style.transform = `translate3d(0px, ${py}px, 0px)`;
         }
       });
     }
