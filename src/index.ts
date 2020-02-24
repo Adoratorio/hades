@@ -102,7 +102,7 @@ class Hades {
     // Atach and listen to events
     this.manager = new Hermes({
       mode: this.options.mode,
-      container: this.options.viewport,
+      container: window,
       touchMultiplier: this.options.touchMultiplier,
     });
     this.manager.on(this.scrollHandler);
