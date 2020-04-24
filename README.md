@@ -31,7 +31,7 @@ When instantiated the constructor take the following options
 |duration|`number`|`1000`|The total lasting duration of the scrolling inertia after the user has stopped scrolling. Expressed in *ms*.|
 |infiniteScroll|`boolean`|`false`|Whether or not the boundries are taken in account when checking the scroll amount, resulting in an infinite scrolling on all axis.|
 |emitGlobal|`boolean`|`false`|If you want the custom scroll generated internally also emitted on global scope (window).|
-|callback|`Function`|`() => {}`|The function called on each scroll event, the [HadesEvent]() is passed to this function.|
+|callback|`Callbacks`|`{ frame: () => {}, scroll: () => {} }`|The callbacks functions, scroll is called on each scroll event, the [HadesEvent]() is passed to this function. Frame is called every rAF after updating style|
 |renderByPixel|`boolean`|`false`|Used if you want to apply integer rounded values to the css transition units. If not, the full value is used instead, resulting in a smoother animations, especially the slowest ones, avoiding that much stattering in particular in the end of the animation, but it's performance consuming.|
 |lockX|`boolean`|`true`|Lock the x axis when detecting scroll events.|
 |lockY|`boolean`|`false`|Lock the y axis when detecting scroll events.|
