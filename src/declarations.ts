@@ -23,7 +23,7 @@ export interface HadesOptions {
   easing : Easing,
   infiniteScroll: boolean,
   emitGlobal : boolean,
-  callback : Function,
+  callbacks : Callbacks,
   renderByPixel : boolean,
   lockX : boolean,
   lockY : boolean,
@@ -65,13 +65,18 @@ export interface Easing {
 }
 
 export interface Track {
-  wrapper: HTMLElement | null,
-  thumb: HTMLElement | null,
-  thumbSize: number,
-  ratio: number,
-  drag: boolean,
+  wrapper : HTMLElement | null,
+  thumb : HTMLElement | null,
+  thumbSize : number,
+  ratio : number,
+  drag : boolean,
 }
 
 export interface ScrollbarOptions {
   tracks : Array<TRACK>, 
+}
+
+export interface Callbacks {
+  frame : Function
+  scroll : Function,
 }

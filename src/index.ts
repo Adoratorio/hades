@@ -53,7 +53,10 @@ class Hades {
       },
       infiniteScroll: false,
       emitGlobal: true,
-      callback: () => {},
+      callbacks: {
+        frame: () => {},
+        scroll: () => {},
+      },
       renderByPixel: true,
       lockX: true,
       lockY: false,
@@ -72,6 +75,9 @@ class Hades {
       uniqueDirection: false,
     };
     this.options = { ...defaults, ...options };
+    if (typeof this.options.callbacks.frame === 'undefined') this.options.callbacks.frame = () => {};
+    if (typeof this.options.callbacks.scroll === 'undefined') this.options.callbacks.scroll = () => {};
+
     this.timeline = {
       start: 0,
       duration: this.options.easing.duration,
@@ -229,6 +235,7 @@ class Hades {
 
     // Reset the initial position of the timeline for the next frame
     this.timeline.initial = this.timeline.current;
+    this.options.callbacks.frame();
   }
 
   private scroll(event : HermesEvent) : void {
@@ -282,7 +289,7 @@ class Hades {
       const customEvent : CustomEvent = new CustomEvent('hades-scroll', eventInit);
       window.dispatchEvent(customEvent);
     }
-    this.options.callback(event);
+    this.options.callbacks.scroll(event);
   }
 
   private emitStillChange(type : string) {
