@@ -74,7 +74,7 @@ class Hades {
       scale: 1,
       uniqueDirection: false,
       threshold: {
-        x: 3,
+        x: 0,
         y: 3,
       },
     };
@@ -114,7 +114,6 @@ class Hades {
       mode: this.options.mode,
       container: window,
       touchMultiplier: this.options.touchMultiplier,
-      threshold: this.options.threshold,
     });
     this.manager.on(this.scrollHandler);
 
@@ -246,6 +245,8 @@ class Hades {
   private scroll(event : HermesEvent) : void {
     // Return if is stopped
     if (!this.running) return;
+    if (Math.abs(event.delta.x) < this.options.threshold.x) return;
+    if (Math.abs(event.delta.y) < this.options.threshold.y) return;
 
     // Reset from the scroll to if needed
     if (this.automaticScrolling) {
