@@ -39,6 +39,7 @@ export interface HadesOptions {
   scrollbar : ScrollbarOptions | null,
   scale : number,
   uniqueDirection : boolean,
+  threshold : Vec2,
 }
 
 export interface Boundries {

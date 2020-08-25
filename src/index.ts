@@ -73,6 +73,10 @@ class Hades {
       },
       scale: 1,
       uniqueDirection: false,
+      threshold: {
+        x: 3,
+        y: 3,
+      },
     };
     this.options = { ...defaults, ...options };
     if (typeof this.options.callbacks.frame === 'undefined') this.options.callbacks.frame = () => {};
@@ -110,6 +114,7 @@ class Hades {
       mode: this.options.mode,
       container: window,
       touchMultiplier: this.options.touchMultiplier,
+      threshold: this.options.threshold,
     });
     this.manager.on(this.scrollHandler);
 
