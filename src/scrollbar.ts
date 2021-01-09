@@ -2,7 +2,6 @@ import Hades from './';
 import {
   Vec2,
   ScrollbarOptions,
-  TRACK,
   Track,
 } from './declarations';
 
@@ -35,6 +34,7 @@ class Scrollbar {
     this.detectPositionHandler = (event : MouseEvent) => this.detectPosition(event);
     this.dragStartHandler = (event : MouseEvent) => this.dragStart(event);
     this.dragEndHandler = (event : MouseEvent) => this.dragEnd(event);
+
     this.init();
   }
 
@@ -94,9 +94,7 @@ class Scrollbar {
     style.id = 'hades-style';
     style.textContent = this.style;
 
-    if (document.head) {
-      document.head.appendChild(style);
-    }
+    if (document.head) document.head.appendChild(style);
   };
 
   private attachEvents() {
@@ -152,7 +150,7 @@ class Scrollbar {
     if ((event.type === 'click' && (<HTMLElement>event.target).dataset.scrollbar === 'track-y') || (event.type === 'mousemove' && this.drag && this.trackY.drag)) {
       if (this.trackY.wrapper !== null && this.trackY.thumb !== null) {
         const { height } = this.trackY.wrapper.getBoundingClientRect();
-    
+
         this.hades.scrollTo({
           y: event.clientY / height * this.hades.boundries.max.y,
         }, duration);
@@ -229,9 +227,9 @@ class Scrollbar {
     document.body.removeEventListener('mouseleave', this.dragEndHandler);
 
     const style = document.getElementById('hades-style');
-    if (!style || !style.parentNode) {
-      return;
-    }
+
+    if (!style || !style.parentNode) return;
+
     style.parentNode.removeChild(style);
 
     if (this.wrapper !== null) this.wrapper.remove();

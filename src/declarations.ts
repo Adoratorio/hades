@@ -40,6 +40,7 @@ export interface HadesOptions {
   scale : number,
   uniqueDirection : boolean,
   threshold : Vec2,
+  startStopPrecision: number,
 }
 
 export interface Boundries {
@@ -74,10 +75,10 @@ export interface Track {
 }
 
 export interface ScrollbarOptions {
-  tracks : Array<TRACK>, 
+  tracks : Array<TRACK>,
 }
 
 export interface Callbacks {
-  frame : Function
+  frame : Function,
   scroll : Function,
 }

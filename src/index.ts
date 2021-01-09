@@ -77,6 +77,7 @@ class Hades {
         x: 0,
         y: 3,
       },
+      startStopPrecision: 4,
     };
     this.options = { ...defaults, ...options };
     if (typeof this.options.callbacks.frame === 'undefined') this.options.callbacks.frame = () => {};
@@ -211,8 +212,8 @@ class Hades {
       y: Math.abs((current.y - this.prevAmount.y) / delta),
     }
     // Use 4 digits precision
-    this.velocity.x = parseFloat(this.velocity.x.toFixed(4));
-    this.velocity.y = parseFloat(this.velocity.y.toFixed(4));
+    this.velocity.x = parseFloat(this.velocity.x.toFixed(this.options.startStopPrecision));
+    this.velocity.y = parseFloat(this.velocity.y.toFixed(this.options.startStopPrecision));
     this.prevAmount = current;
 
     // Check if the scroll is still animating or not
@@ -287,7 +288,7 @@ class Hades {
     }
     this.prevDirection.x = currentXDirection;
     this.prevDirection.y = currentYDirection;
-    
+
     // Emit the event and call the callback
     if (this.options.emitGlobal) {
       const eventInit : CustomEventInit = {};
