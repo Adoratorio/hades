@@ -42,6 +42,7 @@ When instantiated the constructor take the following options
 |touchMultiplier|`number`|`1.5`|A multiplier used for touches delta and speed calculations, passed to Hermes. Reasonable values are between 0.8 and 3 but it's just a suggestion. Higher values will increase the feeling of slippery touch effect.|
 |smoothDirectionChange|`boolean`|`false`|If true when the scroll direction change the easing setted is kept to help the transition between one direction and the other to feel more interial. On realy smooth easings and high durations this can feel a bit awkward. If false an immediate direction change is applied.|
 |renderScroll|`boolean`|`false`|Wheather or not to apply the actual CSS transform property, if false the internal amount is kept and exposed for your personal use.|
+|startStopPrecision|`number`|`4`|A number to define the precision of the start and stop events.|
 
 ## APIs
 ### Static Methods
