@@ -190,18 +190,33 @@ class Hades {
     // Calculate transform based on prev frame amount and transform if section method
     if (this.virtual && this.options.sections) {
       const sectionsHeight : Array<number> = [];
-      this.sections.forEach((section) => sectionsHeight.push(section.getBoundingClientRect().height));
+      const sectionsWidth : Array<number> = [];
+
+      this.sections.forEach((section) => {
+        const { width, height } = section.getBoundingClientRect();
+        sectionsWidth.push(width)
+        sectionsHeight.push(height);
+      });
+
       this.sections.forEach((section, index) => {
         const rect = section.getBoundingClientRect();
+        let prevSectionsWidth = 0;
         let prevSectionsHeight = 0;
-        for (let i = 0; i < index; i++) prevSectionsHeight += sectionsHeight[i];
+
+        for (let i = 0; i < index; i++) {
+          prevSectionsHeight += sectionsHeight[i];
+          prevSectionsWidth += sectionsWidth[i];
+        }
         // Check if we need to translate this section
         if (
-          this.prevAmount.y > (prevSectionsHeight - window.innerHeight) &&
-          ((prevSectionsHeight + rect.height) - window.innerHeight) > 0
+          (this.prevAmount.y > (prevSectionsHeight - window.innerHeight) &&
+          ((prevSectionsHeight + rect.height) - window.innerHeight) > 0) ||
+          (this.prevAmount.x > (prevSectionsWidth - window.innerWidth) &&
+          ((prevSectionsWidth + rect.width) - window.innerWidth) > 0)
         ) {
-          const py = this.amount.y * -1;
-          section.style.transform = `translate3d(0px, ${py}px, 0px)`;
+          const px = this.options.lockX ? 0 : this.amount.x * -1;
+          const py = this.options.lockY ? 0 : this.amount.y * -1;
+          section.style.transform = `translate3d(${px}px, ${py}px, 0px)`;
         }
       });
     }
