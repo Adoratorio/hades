@@ -63,6 +63,7 @@ class Hades {
       boundries: Hades.createBoundries(0, 0, 0, 0),
       autoBoundries: true,
       sections: false,
+      loop: false,
       autoplay: true,
       aion: null,
       touchMultiplier: 1.5,
@@ -98,6 +99,9 @@ class Hades {
     }
     if (this.options.container === null || typeof this.options.container === 'undefined') {
       throw new Error('Container cannot be undefined');
+    }
+    if (this.options.loop && !this.options.sections && !this.options.infiniteScroll) {
+      throw new Error('Cannot have a loop without sections and infiniteScroll enabled');
     }
 
     // If sections are setted load the nodes
@@ -189,13 +193,15 @@ class Hades {
 
     // Calculate transform based on prev frame amount and transform if section method
     if (this.virtual && this.options.sections) {
-      const sectionsHeight : Array<number> = [];
       const sectionsWidth : Array<number> = [];
+      const sectionsHeight : Array<number> = [];
+      const sectionLeft: Array<number> = [];
 
       this.sections.forEach((section) => {
-        const { width, height } = section.getBoundingClientRect();
+        const { width, height, left } = section.getBoundingClientRect();
         sectionsWidth.push(width)
         sectionsHeight.push(height);
+        sectionLeft.push(left);
       });
 
       this.sections.forEach((section, index) => {
@@ -204,19 +210,56 @@ class Hades {
         let prevSectionsHeight = 0;
 
         for (let i = 0; i < index; i++) {
-          prevSectionsHeight += sectionsHeight[i];
           prevSectionsWidth += sectionsWidth[i];
+          prevSectionsHeight += sectionsHeight[i];
         }
+
         // Check if we need to translate this section
-        if (
-          (this.prevAmount.y > (prevSectionsHeight - window.innerHeight) &&
-          ((prevSectionsHeight + rect.height) - window.innerHeight) > 0) ||
-          (this.prevAmount.x > (prevSectionsWidth - window.innerWidth) &&
-          ((prevSectionsWidth + rect.width) - window.innerWidth) > 0)
-        ) {
-          const px = this.options.lockX ? 0 : this.amount.x * -1;
-          const py = this.options.lockY ? 0 : this.amount.y * -1;
-          section.style.transform = `translate3d(${px}px, ${py}px, 0px)`;
+
+        if (!this.options.loop) {
+          if (!this.options.lockX &&
+            this.prevAmount.x > prevSectionsWidth - window.innerWidth &&
+            this.prevAmount.x < prevSectionsWidth + rect.width) {
+            const px = this.options.lockX ? 0 : this.amount.x * -1;
+            section.style.transform = `translate3d(${px}px, 0px, 0px)`;
+          }
+
+          if (!this.options.lockY &&
+            this.prevAmount.y > prevSectionsHeight - window.innerHeight &&
+            this.prevAmount.y < prevSectionsHeight + rect.height) {
+            const py = this.options.lockY ? 0 : this.amount.y * -1;
+            section.style.transform = `translate3d(0px, ${py}px, 0px)`;
+          }
+        }
+
+        if (this.options.loop) {
+          if (!this.options.lockX) {
+            const blockSize = this.boundries.max.x + window.innerWidth;
+            const multiplier = Math.floor(this.prevAmount.x / blockSize);
+            const leftSide = this.prevAmount.x - blockSize * multiplier;
+
+            if (prevSectionsWidth + rect.width > leftSide) {
+              const px = this.options.lockX ? 0 : (this.amount.x - multiplier * blockSize) * -1;
+              section.style.transform = `translate3d(${px}px, 0px, 0px)`;
+            } else {
+              const px = this.options.lockX ? 0 : (this.amount.x - multiplier * blockSize - this.boundries.max.x - window.innerWidth) * -1;
+              section.style.transform = `translate3d(${px}px, 0px, 0px)`;
+            }
+          }
+
+          if (!this.options.lockY) {
+            const blockSize = this.boundries.max.y + window.innerHeight;
+            const multiplier = Math.floor(this.prevAmount.y / blockSize);
+            const topSide = this.prevAmount.y - blockSize * multiplier;
+
+            if (prevSectionsHeight + rect.height > topSide) {
+              const py = this.options.lockY ? 0 : (this.amount.y - multiplier * blockSize) * -1;
+              section.style.transform = `translate3d(0px, ${py}px, 0px)`;
+            } else {
+              const py = this.options.lockY ? 0 : (this.amount.y - multiplier * blockSize - this.boundries.max.y - window.innerHeight) * -1;
+              section.style.transform = `translate3d(0px, ${py}px, 0px)`;
+            }
+          }
         }
       });
     }
