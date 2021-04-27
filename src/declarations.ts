@@ -31,6 +31,7 @@ export interface HadesOptions {
   autoBoundries : boolean,
   mode : string,
   sections : string | boolean,
+  loop: boolean,
   autoplay : boolean,
   aion : Aion | null,
   touchMultiplier : number,
