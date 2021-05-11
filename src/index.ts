@@ -117,7 +117,8 @@ class Hades {
     // Atach and listen to events
     this.manager = new Hermes({
       mode: this.options.mode,
-      container: window,
+      container: this.options.viewport,
+      hook: this.options.container,
       touchMultiplier: this.options.touchMultiplier,
     });
     this.manager.on(this.scrollHandler);
@@ -374,7 +375,7 @@ class Hades {
         this.imediateScrolling = true;
       }
     } else {
-      window.scroll({
+      this.options.viewport.scroll({
         left: position.x,
         top: position.y,
         behavior: duration === 0 ? 'auto' : 'smooth',
