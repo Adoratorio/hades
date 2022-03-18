@@ -36,6 +36,7 @@ class Hades {
   private scrollbar : Scrollbar | null = null;
   private stopNeedEmission : boolean = false;
   private startNeedEmission : boolean = true;
+  private aionId : string = `hades-frame-${Date.now()}`;
 
   public amount : Vec2 = { x: 0, y: 0 };
   public velocity : Vec2 = { x: 0, y: 0 };
@@ -135,7 +136,7 @@ class Hades {
       this.scrollbar = new Scrollbar(this.options.scrollbar, this, this.options.viewport);
     }
 
-    this.engine.add(this.frameHandler, 'hades_frame');
+    this.engine.add(this.frameHandler, this.aionId);
     this.engine.start();
   }
 
@@ -396,7 +397,7 @@ class Hades {
   public destroy() {
     if (this.scrollbar !== null) this.scrollbar.destroy();
     this.manager.destroy();
-    this.engine.remove('hades_frame');
+    this.engine.remove(this.aionId);
 
     delete this.manager;
     delete this.engine;
