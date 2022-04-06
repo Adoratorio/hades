@@ -399,7 +399,9 @@ class Hades {
     this.manager.destroy();
     this.engine.remove(this.aionId);
 
+    // @ts-expect-error
     delete this.manager;
+    // @ts-expect-error
     delete this.engine;
   }
 
