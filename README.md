@@ -32,7 +32,7 @@ Hades accepts in the constructor an option object with the following possible pr
 | lockX                 |                          `boolean`                           |                     `true`                      | Lock the **x** axis when detecting scroll events.            |
 | lockY                 |                          `boolean`                           |                     `false`                     | Lock the **y** axis when detecting scroll events.            |
 | sections              |                      `boolean | string`                      |                     `false`                     | Whether to use the technique of sections. Pass the **CSS to selector** for the sections to activate. <br />The translate properties are applied to the sections instead of the whole container, using the correct values to make the sections translating only when they should be in viewport. <br />*This is computationally more expensive due to loops, but will gain in GPU performance 'cause the translation is applied to a smaller "surface".* |
-| boundries             | `{ min: { x: number, y:number },max: { x:number, y:number } }` | `Hades.createBoundries(xMin, xMax, yMin, yMax)` | The scroll max and min amount in the x and y axis. An object containing these properties `{ min: { x: 0, y: 0 }, max: { x: 0, y: 0 } }`. A static utility function is exposed as helper to build the object: `Hades.createBoundries(xMin, xMax, yMin, yMax)`. |
+| boundaries             | `{ min: { x: number, y:number },max: { x:number, y:number } }` | `Hades.createBoundaries(xMin, xMax, yMin, yMax)` | The scroll max and min amount in the x and y axis. An object containing these properties `{ min: { x: 0, y: 0 }, max: { x: 0, y: 0 } }`. A static utility function is exposed as helper to build the object: `Hades.createBoundaries(xMin, xMax, yMin, yMax)`. |
 | loop                  |                          `boolean`                           |                     `false`                     | If _sections_ and _infiniteScroll_ are enabled you can create an infinite loop of section that cycle continuously.<br> ***Note***: Currently implemented **only for x-axis** (`{ lockX: false, lockY: true}`). |
 | infiniteScroll        |                          `boolean`                           |                     `false`                     | Whether or not the boundaries are taken into account when checking the scroll amount, resulting in an infinite scrolling on all axis. |
 | renderScroll          |                          `boolean`                           |                    `fkalse`                     | Whether or not to apply the actual CSS transform property.<br />If false the internal amount is kept and exposed for your personal use. |
@@ -64,9 +64,9 @@ Hades accepts in the constructor an option object with the following possible pr
 
 ### Static Methods
 
-#### Hades.createBoundries(xMin, xMax, yMin, yMax)
+#### Hades.createBoundaries(xMin, xMax, yMin, yMax)
 ```typescript
-Hades.createBoundires(xMin: number, xMax: number, yMin: number, yMax: number): Boundries
+Hades.createBoundires(xMin: number, xMax: number, yMin: number, yMax: number): Boundaries
 ```
 Create an object that fits the scrollbar boundaries.
 
@@ -130,9 +130,9 @@ Set if infinite scroll is used or not, use the constructor param for documentati
 • Type `boolean`
 Set if global events are emitted or not.
 
-#### boundries
+#### boundaries
 
-• Type `Boundries`
+• Type `Boundaries`
 Set a new boundaries to control the scroll max and min amount in the x and y axis.
 
 #### touchMultiplier

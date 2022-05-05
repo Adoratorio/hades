@@ -27,8 +27,8 @@ export interface HadesOptions {
   renderByPixel : boolean,
   lockX : boolean,
   lockY : boolean,
-  boundries : Boundries,
-  autoBoundries : boolean,
+  boundaries : Boundaries,
+  autoBoundaries : boolean,
   mode : string,
   sections : string | boolean,
   loop: boolean,
@@ -44,7 +44,7 @@ export interface HadesOptions {
   startStopPrecision: number,
 }
 
-export interface Boundries {
+export interface Boundaries {
   max : Vec2,
   min : Vec2,
 }

@@ -6,7 +6,7 @@ import {
   DIRECTION,
   TRACK,
   HadesOptions,
-  Boundries,
+  Boundaries,
   Vec2,
   Timeline,
   Easing,
@@ -61,8 +61,8 @@ class Hades {
       renderByPixel: true,
       lockX: true,
       lockY: false,
-      boundries: Hades.createBoundries(0, 0, 0, 0),
-      autoBoundries: true,
+      boundaries: Hades.createBoundaries(0, 0, 0, 0),
+      autoBoundaries: true,
       sections: false,
       loop: false,
       autoplay: true,
@@ -142,10 +142,10 @@ class Hades {
 
   private frame(delta : number) : void {
     // If boundires are autosetted use the container dimensions
-    if (this.options.autoBoundries) {
+    if (this.options.autoBoundaries) {
       const containerRect = this.options.container.getBoundingClientRect();
       const viewportRect = this.virtual ? this.options.viewport.getBoundingClientRect() : { width: window.innerWidth, height: window.innerHeight };
-      this.options.boundries = Hades.createBoundries(
+      this.options.boundaries = Hades.createBoundaries(
         0,
         containerRect.width < viewportRect.width ? 0 : containerRect.width - viewportRect.width,
         0,
@@ -236,7 +236,7 @@ class Hades {
 
         if (this.options.loop) {
           if (!this.options.lockX) {
-            const blockSize = this.boundries.max.x + window.innerWidth;
+            const blockSize = this.boundaries.max.x + window.innerWidth;
             const multiplier = Math.floor(this.prevAmount.x / blockSize);
             const leftSide = this.prevAmount.x - blockSize * multiplier;
 
@@ -244,13 +244,13 @@ class Hades {
               const px = this.options.lockX ? 0 : (this.amount.x - multiplier * blockSize) * -1;
               section.style.transform = `translate3d(${px}px, 0px, 0px)`;
             } else {
-              const px = this.options.lockX ? 0 : (this.amount.x - multiplier * blockSize - this.boundries.max.x - window.innerWidth) * -1;
+              const px = this.options.lockX ? 0 : (this.amount.x - multiplier * blockSize - this.boundaries.max.x - window.innerWidth) * -1;
               section.style.transform = `translate3d(${px}px, 0px, 0px)`;
             }
           }
 
           if (!this.options.lockY) {
-            const blockSize = this.boundries.max.y + window.innerHeight;
+            const blockSize = this.boundaries.max.y + window.innerHeight;
             const multiplier = Math.floor(this.prevAmount.y / blockSize);
             const topSide = this.prevAmount.y - blockSize * multiplier;
 
@@ -258,7 +258,7 @@ class Hades {
               const py = this.options.lockY ? 0 : (this.amount.y - multiplier * blockSize) * -1;
               section.style.transform = `translate3d(0px, ${py}px, 0px)`;
             } else {
-              const py = this.options.lockY ? 0 : (this.amount.y - multiplier * blockSize - this.boundries.max.y - window.innerHeight) * -1;
+              const py = this.options.lockY ? 0 : (this.amount.y - multiplier * blockSize - this.boundaries.max.y - window.innerHeight) * -1;
               section.style.transform = `translate3d(0px, ${py}px, 0px)`;
             }
           }
@@ -330,10 +330,10 @@ class Hades {
     const tempX = this._amount.x + event.delta.x;
     const tempY = this._amount.y + event.delta.y;
 
-    // Clamp the sum amount to be inside the boundries if not infinite scrolling
+    // Clamp the sum amount to be inside the boundaries if not infinite scrolling
     if (!this.options.infiniteScroll) {
-      this._amount.x = Math.min(Math.max(tempX, this.options.boundries.min.x), this.options.boundries.max.x);
-      this._amount.y = Math.min(Math.max(tempY, this.options.boundries.min.y), this.options.boundries.max.y);
+      this._amount.x = Math.min(Math.max(tempX, this.options.boundaries.min.x), this.options.boundaries.max.x);
+      this._amount.y = Math.min(Math.max(tempY, this.options.boundaries.min.y), this.options.boundaries.max.y);
     } else {
       this._amount.x = tempX;
       this._amount.y = tempY;
@@ -423,8 +423,8 @@ class Hades {
     return this.prevDirection;
   }
 
-  public get boundries() {
-    return this.options.boundries;
+  public get boundaries() {
+    return this.options.boundaries;
   }
 
   // Common getters for setting option on the fly
@@ -441,13 +441,13 @@ class Hades {
     this.options.emitGlobal = emitGlobal;
   }
 
-  public set boundries(boundries : Boundries) {
-    this.options.boundries = boundries;
-    if (this._amount.y > this.options.boundries.max.y) {
-      this.scrollTo({ y: this.options.boundries.max.y }, 0);
+  public set boundaries(boundaries : Boundaries) {
+    this.options.boundaries = boundaries;
+    if (this._amount.y > this.options.boundaries.max.y) {
+      this.scrollTo({ y: this.options.boundaries.max.y }, 0);
     }
-    if (this._amount.x > this.options.boundries.max.x) {
-      this.scrollTo({ x: this.options.boundries.max.x }, 0);
+    if (this._amount.x > this.options.boundaries.max.x) {
+      this.scrollTo({ x: this.options.boundaries.max.x }, 0);
     }
   }
 
@@ -465,12 +465,12 @@ class Hades {
 
   // Some utils
 
-  public static createBoundries(xMin : number, xMax : number, yMin : number, yMax : number) : Boundries {
-    const boundries : Boundries = {
+  public static createBoundaries(xMin : number, xMax : number, yMin : number, yMax : number) : Boundaries {
+    const boundaries : Boundaries = {
       min: { x: xMin, y: yMin },
       max: { x: xMax, y: yMax }
     };
-    return boundries;
+    return boundaries;
   }
 }
 
