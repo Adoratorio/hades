@@ -112,7 +112,7 @@ class Scrollbar {
 
   public listen(amount : Vec2) {
     if (this.trackX.wrapper !== null && this.trackX.thumb !== null) {
-      const ratio = amount.x / this.hades.boundries.max.x;
+      const ratio = amount.x / this.hades.boundaries.max.x;
       const { width } = this.trackX.wrapper.getBoundingClientRect();
 
       const translate = (width - this.trackX.thumbSize) * ratio;
@@ -128,7 +128,7 @@ class Scrollbar {
     }
 
     if (this.trackY.wrapper !== null && this.trackY.thumb !== null) {
-      const ratio = amount.y / this.hades.boundries.max.y;
+      const ratio = amount.y / this.hades.boundaries.max.y;
       const { height } = this.trackY.wrapper.getBoundingClientRect();
 
       const translate = (height - this.trackY.thumbSize) * ratio;
@@ -152,7 +152,7 @@ class Scrollbar {
         const { height } = this.trackY.wrapper.getBoundingClientRect();
 
         this.hades.scrollTo({
-          y: event.clientY / height * this.hades.boundries.max.y,
+          y: event.clientY / height * this.hades.boundaries.max.y,
         }, duration);
       }
     }
@@ -162,7 +162,7 @@ class Scrollbar {
         const { width } = this.trackX.wrapper.getBoundingClientRect();
 
         this.hades.scrollTo({
-          x: event.clientX / width * this.hades.boundries.max.x,
+          x: event.clientX / width * this.hades.boundaries.max.x,
         }, duration);
       }
     }
