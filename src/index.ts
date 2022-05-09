@@ -301,6 +301,12 @@ class Hades {
     // Reset the initial position of the timeline for the next frame
     this.timeline.initial = this.timeline.current;
     this.options.callbacks.frame();
+
+    // Update the amount in case of native scroll
+    if (this.native) {
+      this.amount.x = this.options.viewport.scrollLeft;
+      this.amount.y = this.options.viewport.scrollTop;
+    }
   }
 
   private scroll(event : HermesEvent) : void {
