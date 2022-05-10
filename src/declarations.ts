@@ -2,7 +2,7 @@ import Aion from '@adoratorio/aion';
 
 export enum MODE {
   VIRTUAL = 'virtual',
-  FAKE = 'fake',
+  MIMO = 'mimo',
   NATIVE = 'native',
 }
 
@@ -20,6 +20,7 @@ export enum TRACK {
 export interface HadesOptions {
   viewport : HTMLElement,
   container : HTMLElement,
+  mimo : Mimo | false,
   easing : Easing,
   infiniteScroll: boolean,
   emitGlobal : boolean,
@@ -82,4 +83,9 @@ export interface ScrollbarOptions {
 export interface Callbacks {
   frame : Function,
   scroll : Function,
+}
+
+export interface Mimo {
+  viewport : HTMLElement,
+  container: HTMLElement,
 }

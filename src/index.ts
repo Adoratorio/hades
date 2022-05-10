@@ -48,6 +48,7 @@ class Hades {
       mode: MODE.VIRTUAL,
       viewport: document.querySelector('.hades-viewport') as HTMLElement,
       container: document.querySelector('.hades-container') as HTMLElement,
+      mimo: false,
       easing: {
         mode: Easings.LINEAR,
         duration: 1000,
@@ -104,6 +105,12 @@ class Hades {
     if (this.options.loop && !this.options.sections && !this.options.infiniteScroll) {
       throw new Error('Cannot have a loop without sections and infiniteScroll enabled');
     }
+    if (
+      this.options.mimo && 
+      (typeof this.options.mimo.viewport === 'undefined' || typeof this.options.mimo.container === 'undefined')
+    ) {
+      throw new Error('Cannot use MIMO mode without a mimo container and viewport');
+    }
 
     // If sections are setted load the nodes
     if (this.virtual && this.options.sections) {
@@ -115,13 +122,29 @@ class Hades {
     this.options.container.style.webkitBackfaceVisibility = 'hidden';
     this.options.container.style.backfaceVisibility = 'hidden';
 
+    // If mimo mode set the css for the mimo container
+    if (this.options.mimo) {
+      const containerRect = this.options.container.getBoundingClientRect();
+      (this.options.mimo.container as HTMLElement).style.height = `${containerRect.height}px`;
+      (this.options.mimo.container as HTMLElement).style.width = `${containerRect.width}px`;
+    }
+
     // Atach and listen to events
-    this.manager = new Hermes({
-      mode: this.options.mode,
-      container: this.options.viewport,
-      hook: this.options.container,
-      touchMultiplier: this.options.touchMultiplier,
-    });
+    if (this.options.mimo) {
+      this.manager = new Hermes({
+        mode: MODE.NATIVE,
+        container: this.options.mimo.viewport,
+        hook: this.options.mimo.container,
+        touchMultiplier: this.options.touchMultiplier,
+      });
+    } else {
+      this.manager = new Hermes({
+        mode: this.options.mode,
+        container: this.options.viewport,
+        hook: this.options.container,
+        touchMultiplier: this.options.touchMultiplier,
+      });
+    }
     this.manager.on(this.scrollHandler);
 
     // Check and initialize Aion
@@ -186,7 +209,7 @@ class Hades {
     this.amount = this.options.renderByPixel ? roundedCurrent : current;
 
     // Apply transformation in case of non section method
-    if (this.virtual && this.options.renderScroll && !this.options.sections) {
+    if ((this.virtual || this.mimo) && this.options.renderScroll && !this.options.sections) {
       const px = this.options.lockX ? 0 : this.amount.x * -1;
       const py = this.options.lockY ? 0 : this.amount.y * -1;
       const prop = `translate3d(${px}px, ${py}px, 0px)`;
@@ -417,8 +440,8 @@ class Hades {
     return this.options.mode === Hades.MODE.VIRTUAL;
   }
 
-  public get fake() {
-    return this.options.mode === Hades.MODE.FAKE;
+  public get mimo() {
+    return this.options.mode === Hades.MODE.MIMO;
   }
 
   public get native() {
