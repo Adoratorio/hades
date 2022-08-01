@@ -118,7 +118,7 @@ class Hades {
     // Atach and listen to events
     this.manager = new Hermes({
       mode: this.options.mode,
-      container: this.options.viewport,
+      container: window,
       hook: this.options.container,
       touchMultiplier: this.options.touchMultiplier,
     });
