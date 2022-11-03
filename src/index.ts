@@ -57,6 +57,7 @@ class Hades {
       callbacks: {
         frame: () => {},
         scroll: () => {},
+        wheel: () => {},
       },
       renderByPixel: true,
       lockX: true,
@@ -84,6 +85,7 @@ class Hades {
     this.options = { ...defaults, ...options };
     if (typeof this.options.callbacks.frame === 'undefined') this.options.callbacks.frame = () => {};
     if (typeof this.options.callbacks.scroll === 'undefined') this.options.callbacks.scroll = () => {};
+    if (typeof this.options.callbacks.wheel === 'undefined') this.options.callbacks.wheel = () => {};
 
     this.timeline = {
       start: 0,
@@ -310,6 +312,8 @@ class Hades {
   }
 
   private scroll(event : HermesEvent) : void {
+    // At least call the wheel callback
+    this.options.callbacks.wheel(event);
     // Return if is stopped
     if (!this.running) return;
     if (Math.abs(event.delta.x) < this.options.threshold.x) return;

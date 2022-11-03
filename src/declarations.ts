@@ -82,4 +82,5 @@ export interface ScrollbarOptions {
 export interface Callbacks {
   frame : Function,
   scroll : Function,
+  wheel : Function,
 }
