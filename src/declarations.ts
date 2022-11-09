@@ -1,10 +1,5 @@
 import Aion from '@adoratorio/aion';
-
-export enum MODE {
-  VIRTUAL = 'virtual',
-  FAKE = 'fake',
-  NATIVE = 'native',
-}
+import Boundries from './Boundaries';
 
 export enum DIRECTION {
   UP = 1,
@@ -12,41 +7,21 @@ export enum DIRECTION {
   INITIAL = 0,
 }
 
-export enum TRACK {
-  X = 'x',
-  Y = 'y',
-}
-
 export interface HadesOptions {
-  viewport : HTMLElement,
-  container : HTMLElement,
+  root : HTMLElement,
   easing : Easing,
   infiniteScroll: boolean,
-  emitGlobal : boolean,
-  callbacks : Callbacks,
-  renderByPixel : boolean,
   lockX : boolean,
   lockY : boolean,
-  boundaries : Boundaries,
+  boundaries : Boundries,
   autoBoundaries : boolean,
-  mode : string,
-  sections : string | boolean,
-  loop: boolean,
   autoplay : boolean,
   aion : Aion | null,
   touchMultiplier : number,
   smoothDirectionChange : boolean,
-  renderScroll : boolean,
-  scrollbar : ScrollbarOptions | null,
   scale : number,
-  uniqueDirection : boolean,
   threshold : Vec2,
-  startStopPrecision: number,
-}
-
-export interface Boundaries {
-  max : Vec2,
-  min : Vec2,
+  precision : number,
 }
 
 export interface Vec2 {
@@ -67,20 +42,10 @@ export interface Easing {
   duration : number,
 }
 
-export interface Track {
-  wrapper : HTMLElement | null,
-  thumb : HTMLElement | null,
-  thumbSize : number,
-  ratio : number,
-  drag : boolean,
-}
-
-export interface ScrollbarOptions {
-  tracks : Array<TRACK>,
-}
-
-export interface Callbacks {
-  frame : Function,
-  scroll : Function,
-  wheel : Function,
+export interface HadesPlugin {
+  wheel? : Function,     // Called every wheel event
+  preScroll? : Function, // Called at the start of scroll handler
+  scroll? : Function,    // Called at the end of scroll handler
+  preFrame? : Function,  // Called at the start of frame handler
+  render? : Function,    // Called at the end of frame handler for render
 }
