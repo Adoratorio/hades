@@ -1,3 +1,3 @@
 export interface LenisRenderOptions {
-  container : HTMLElement,
+  scrollNode : HTMLElement | Window,
 }

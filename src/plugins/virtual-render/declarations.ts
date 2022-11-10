@@ -1,6 +1,5 @@
 export interface VirtualRenderOptions {
-  container : HTMLElement,
-  viewport : HTMLElement,
+  scrollNode : HTMLElement,
   lockX : boolean,
   lockY : boolean,
   renderScroll : boolean,
