@@ -1,6 +1,6 @@
 import { Vec2 } from "./declarations";
 
-export default class Boundaries {  
+class Boundaries {  
   min : Vec2 = {
     x: 0,
     y: 0,
@@ -18,3 +18,5 @@ export default class Boundaries {
     this.max.y = yMax;
   }
 }
+
+export default Boundaries;

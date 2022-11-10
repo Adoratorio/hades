@@ -128,10 +128,13 @@ class Hades {
     this.timeline.current.x = this.timeline.initial.x + (time * (this.timeline.final.x - this.timeline.initial.x));
     this.timeline.current.y = this.timeline.initial.y + (time * (this.timeline.final.y - this.timeline.initial.y));
     const current : Vec2 = {
-      x: parseFloat(this.timeline.current.x.toFixed(this.options.precision)),
-      y: parseFloat(this.timeline.current.y.toFixed(this.options.precision)),
+      x: this.timeline.current.x,
+      y: this.timeline.current.y,
     };
-    this.amount = current;
+
+    // Fix the amount to expose using the precision
+    this.amount.x = parseFloat(current.x.toFixed(this.options.precision));
+    this.amount.y = parseFloat(current.y.toFixed(this.options.precision));
 
     // Calculate the speed
     this.velocity = {
@@ -145,8 +148,8 @@ class Hades {
     this.prevAmount = current;
 
     // Check the scroll direction
-    const currentXDirection = this.velocity.x > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP;
-    const currentYDirection = this.velocity.y > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP;
+    const currentXDirection = this.velocity.x === 0 ? (Hades.DIRECTION.INITIAL) : (this.velocity.x > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP);
+    const currentYDirection = this.velocity.y === 0 ? (Hades.DIRECTION.INITIAL) : (this.velocity.y > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP);
     if (!this.options.smoothDirectionChange) {
       if (currentXDirection !== this.prevDirection.x) this._amount.x = this.amount.x;
       if (currentYDirection !== this.prevDirection.y) this._amount.y = this.amount.y;
@@ -217,15 +220,20 @@ class Hades {
     if (typeof position.y !== 'undefined') this._amount.y = position.y;
   }
 
-  public play() {
+  public registerPlugin(plugin : HadesPlugin) : Array<HadesPlugin> {
+    this.plugins.push(plugin);
+    return this.plugins;
+  }
+
+  public play() : void {
     this.running = true;
   }
 
-  public pause() {
+  public pause() : void {
     this.running = false;
   }
 
-  public destroy() {
+  public destroy() : void {
     this.manager.destroy();
     this.engine.remove(this.aionId);
 
