@@ -7,16 +7,19 @@ class VirtualRender implements HadesPlugin {
 
   constructor(options : Partial<VirtualRenderOptions>) {
     const defaults : VirtualRenderOptions = {
-      container: document.querySelector('.hades-container') as HTMLElement,
-      viewport: document.querySelector('.hades-viewport') as HTMLElement,
+      scrollNode: document.body as HTMLElement,
       lockX: true,
       lockY: false,
       renderScroll: true,
     };
     this.options = { ...defaults, ...options };
 
-    this.options.container.style.webkitBackfaceVisibility = 'hidden';
-    this.options.container.style.backfaceVisibility = 'hidden';
+    if (typeof this.options.scrollNode === 'undefined') {
+      throw new Error('Invalid Scroll Node for Virtual Render');
+    }
+
+    this.options.scrollNode.style.webkitBackfaceVisibility = 'hidden';
+    this.options.scrollNode.style.backfaceVisibility = 'hidden';
   }
 
   render(context : Hades) : void {
@@ -25,7 +28,7 @@ class VirtualRender implements HadesPlugin {
     const prop = `translate3d(${px}px, ${py}px, 0px)`;
 
     if (this.options.renderScroll) {
-      this.options.container.style.transform = prop;
+      this.options.scrollNode.style.transform = prop;
     }
   }
 

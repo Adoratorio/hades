@@ -75,6 +75,7 @@ class Hades {
       mode: Hermes.MODE.VIRTUAL,
       container: this.options.root,
       touchMultiplier: this.options.touchMultiplier,
+      passive: false,
     });
     this.manager.on(this.scrollHandler);
 
