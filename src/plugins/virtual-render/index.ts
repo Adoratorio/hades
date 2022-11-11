@@ -3,7 +3,8 @@ import { HadesPlugin } from "../../declarations";
 import { VirtualRenderOptions } from "./declarations";
 
 class VirtualRender implements HadesPlugin {
-  options : VirtualRenderOptions;
+  private context : Hades | null = null;
+  private options : VirtualRenderOptions;
 
   constructor(options : Partial<VirtualRenderOptions>) {
     const defaults : VirtualRenderOptions = {
@@ -20,6 +21,10 @@ class VirtualRender implements HadesPlugin {
 
     this.options.scrollNode.style.webkitBackfaceVisibility = 'hidden';
     this.options.scrollNode.style.backfaceVisibility = 'hidden';
+  }
+
+  register(context : Hades) {
+    this.context = context;
   }
 
   render(context : Hades) : void {

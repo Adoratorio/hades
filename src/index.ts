@@ -132,10 +132,7 @@ class Hades {
       x: this.timeline.current.x,
       y: this.timeline.current.y,
     };
-
-    // Fix the amount to expose using the precision
-    this.amount.x = parseFloat(current.x.toFixed(this.options.precision));
-    this.amount.y = parseFloat(current.y.toFixed(this.options.precision));
+    this.amount = current;
 
     // Calculate the speed
     this.velocity = {
@@ -148,10 +145,10 @@ class Hades {
     this.velocity.y = parseFloat(this.velocity.y.toFixed(this.options.precision));
     this.prevAmount = current;
 
-    // Check the scroll direction
+    // Check the scroll direction and reset the timeline if it's not automated by scrollTo
     const currentXDirection = this.velocity.x === 0 ? (Hades.DIRECTION.INITIAL) : (this.velocity.x > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP);
     const currentYDirection = this.velocity.y === 0 ? (Hades.DIRECTION.INITIAL) : (this.velocity.y > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP);
-    if (!this.options.smoothDirectionChange) {
+    if (!this.options.smoothDirectionChange && !this.automaticScrolling) {
       if (currentXDirection !== this.prevDirection.x) this._amount.x = this.amount.x;
       if (currentYDirection !== this.prevDirection.y) this._amount.y = this.amount.y;
     }
@@ -174,7 +171,7 @@ class Hades {
     if (Math.abs(event.delta.x) < this.options.threshold.x) return;
     if (Math.abs(event.delta.y) < this.options.threshold.y) return;
 
-    // Reset from the scroll to if needed
+    // Reset from the scrollTo if needed
     if (this.automaticScrolling) {
       this.timeline.duration = this.options.easing.duration;
       this.amount = this.prevAmount;
@@ -217,11 +214,19 @@ class Hades {
     } else {
       this.imediateScrolling = true;
     }
+
+    // Reset the timeline at the current position before overwriting the scroll
+    if (!this.options.smoothDirectionChange) {
+      this._amount.x = this.amount.x;
+      this._amount.y = this.amount.y;
+    }
+
     if (typeof position.x !== 'undefined') this._amount.x = position.x;
     if (typeof position.y !== 'undefined') this._amount.y = position.y;
   }
 
   public registerPlugin(plugin : HadesPlugin) : Array<HadesPlugin> {
+    if (typeof plugin.register === 'function') plugin.register(this);
     this.plugins.push(plugin);
     return this.plugins;
   }

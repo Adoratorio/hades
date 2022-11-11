@@ -43,6 +43,7 @@ export interface Easing {
 }
 
 export interface HadesPlugin {
+  register? : Function,   // Called when the plugin is registerd
   wheel? : Function,     // Called every wheel event
   preScroll? : Function, // Called at the start of scroll handler
   scroll? : Function,    // Called at the end of scroll handler
