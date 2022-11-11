@@ -1,7 +1,6 @@
 import Aion from '@adoratorio/aion';
 import Hermes from '@adoratorio/hermes';
 import { HermesEvent } from '@adoratorio/hermes/dist/declarations';
-import Boundaries from './Boundaries';
 import {
   DIRECTION,
   HadesOptions,
@@ -17,6 +16,7 @@ class Hades {
   static DIRECTION = DIRECTION;
 
   private _amount : Vec2 = { x: 0, y: 0 };
+  private _temp : Vec2 = { x: 0, y: 0 };
 
   private options : HadesOptions;
   private engine : Aion;
@@ -42,11 +42,6 @@ class Hades {
         mode: Easings.LINEAR,
         duration: 1000,
       },
-      infiniteScroll: false,
-      lockX: true,
-      lockY: false,
-      boundaries: new Boundaries(0, 0, 0, 0),
-      autoBoundaries: true,
       autoplay: true,
       aion: null,
       touchMultiplier: 1.5,
@@ -56,7 +51,6 @@ class Hades {
         x: 0,
         y: 3,
       },
-      precision: 4,
     };
     this.options = { ...defaults, ...options };
 
@@ -94,17 +88,6 @@ class Hades {
   private frame(delta : number) : void {
     // Call PLUGIN preFrame
     this.plugins.forEach((plugin) => plugin.preFrame && plugin.preFrame(this));
-
-     // If boundires are autosetted use the container dimensions
-     if (this.options.autoBoundaries) {
-      const containerRect = this.options.root.getBoundingClientRect();
-      this.options.boundaries = new Boundaries(
-        0,
-        containerRect.width - window.innerWidth,
-        0,
-        containerRect.height - window.innerHeight,
-      );
-    }
     
     // Get the new final value
     this.timeline.final.x = this._amount.x;
@@ -136,14 +119,11 @@ class Hades {
 
     // Calculate the speed
     this.velocity = {
-      x: Math.abs((current.x - this.prevAmount.x) / delta),
-      y: Math.abs((current.y - this.prevAmount.y) / delta),
+      x: (current.x - this.prevAmount.x) / delta,
+      y: (current.y - this.prevAmount.y) / delta,
     }
 
-    // Set the velocity and round at precision
-    this.velocity.x = parseFloat(this.velocity.x.toFixed(this.options.precision));
-    this.velocity.y = parseFloat(this.velocity.y.toFixed(this.options.precision));
-    this.prevAmount = current;
+    this.prevAmount = this.amount;
 
     // Check the scroll direction and reset the timeline if it's not automated by scrollTo
     const currentXDirection = this.velocity.x === 0 ? (Hades.DIRECTION.INITIAL) : (this.velocity.x > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP);
@@ -154,6 +134,10 @@ class Hades {
     }
     this.prevDirection.x = currentXDirection;
     this.prevDirection.y = currentYDirection;
+
+    // Use 4 digits precision for velocity and absolutize
+    this.velocity.x = Math.abs(parseFloat(this.velocity.x.toFixed(4)));
+    this.velocity.y = Math.abs(parseFloat(this.velocity.y.toFixed(4)));
 
     // Reset the initial position of the timeline for the next frame
     this.timeline.initial = this.timeline.current;
@@ -184,27 +168,16 @@ class Hades {
     // Multiply the scroll by the options multiplier
     event.delta.y = event.delta.y * this.options.scale;
 
-    // Set the first scroll direction
-    if (this.prevDirection.x === Hades.DIRECTION.INITIAL || this.prevDirection.y === Hades.DIRECTION.INITIAL) {
-      this.prevDirection.x = event.delta.x > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP;
-      this.prevDirection.y = event.delta.y > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP;
-    }
-
     // Temporary sum amount
-    const tempX = this._amount.x + event.delta.x;
-    const tempY = this._amount.y + event.delta.y;
-
-    // Clamp the sum amount to be inside the boundaries if not infinite scrolling
-    if (!this.options.infiniteScroll) {
-      this._amount.x = Math.min(Math.max(tempX, this.options.boundaries.min.x), this.options.boundaries.max.x);
-      this._amount.y = Math.min(Math.max(tempY, this.options.boundaries.min.y), this.options.boundaries.max.y);
-    } else {
-      this._amount.x = tempX;
-      this._amount.y = tempY;
-    }
-
+    this._temp.x = this._amount.x + event.delta.x;
+    this._temp.y = this._amount.y + event.delta.y;
+    
     // Call PLUGIN scroll
     this.plugins.forEach((plugin) => plugin.scroll && plugin.scroll(this, event));
+
+    // Finalize the amount, need if the plugin modify the temp amount inside scroll callback
+    this._amount.x = this._temp.x;
+    this._amount.y = this._temp.y;
   }
 
   public scrollTo(position : Partial<Vec2>, duration : number) {
@@ -240,6 +213,7 @@ class Hades {
   }
 
   public destroy() : void {
+    this.plugins.forEach((plugin) => plugin.destroy && plugin.destroy());
     this.manager.destroy();
     this.engine.remove(this.aionId);
 
@@ -255,28 +229,22 @@ class Hades {
     return this.prevDirection;
   }
 
-  public get boundaries() {
-    return this.options.boundaries;
+  public get root() {
+    return this.options.root;
   }
 
-  // Common getters for setting option on the fly
+  public get internalAmount() {
+    return this._amount;
+  }
+
+  public get internalTemp() {
+    return this._temp;
+  }
+
+  // Common setters for setting option on the fly
 
   public set easing(easing : Easing) {
     this.options.easing = easing;
-  }
-
-  public set infiniteScroll(infiniteScroll : boolean) {
-    this.options.infiniteScroll = infiniteScroll;
-  }
-
-  public set boundaries(boundaries : Boundaries) {
-    this.options.boundaries = boundaries;
-    if (this._amount.y > this.options.boundaries.max.y) {
-      this.scrollTo({ y: this.options.boundaries.max.y }, 0);
-    }
-    if (this._amount.x > this.options.boundaries.max.x) {
-      this.scrollTo({ x: this.options.boundaries.max.x }, 0);
-    }
   }
 
   public set touchMultiplier(touchMultiplier : number) {
@@ -285,6 +253,16 @@ class Hades {
 
   public set smoothDirectionChange(smoothDirectionChange : boolean) {
     this.options.smoothDirectionChange = smoothDirectionChange;
+  }
+
+  public set internalAmount(values : Vec2) {
+    this._amount.x = values.x;
+    this._amount.y = values.y;
+  }
+
+  public set internalTemp(values : Vec2) {
+    this._temp.x = values.x;
+    this._temp.y = values.y;
   }
 }
 
