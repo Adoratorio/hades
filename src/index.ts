@@ -125,6 +125,10 @@ class Hades {
 
     this.prevAmount = this.amount;
 
+    // Use 4 digits precision for velocity and absolutize
+    this.velocity.x = Math.abs(parseFloat(this.velocity.x.toFixed(4)));
+    this.velocity.y = Math.abs(parseFloat(this.velocity.y.toFixed(4)));
+
     // Check the scroll direction and reset the timeline if it's not automated by scrollTo
     const currentXDirection = this.velocity.x === 0 ? (Hades.DIRECTION.INITIAL) : (this.velocity.x > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP);
     const currentYDirection = this.velocity.y === 0 ? (Hades.DIRECTION.INITIAL) : (this.velocity.y > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP);
@@ -134,10 +138,6 @@ class Hades {
     }
     this.prevDirection.x = currentXDirection;
     this.prevDirection.y = currentYDirection;
-
-    // Use 4 digits precision for velocity and absolutize
-    this.velocity.x = Math.abs(parseFloat(this.velocity.x.toFixed(4)));
-    this.velocity.y = Math.abs(parseFloat(this.velocity.y.toFixed(4)));
 
     // Reset the initial position of the timeline for the next frame
     this.timeline.initial = this.timeline.current;
