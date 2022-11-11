@@ -10,18 +10,12 @@ export enum DIRECTION {
 export interface HadesOptions {
   root : HTMLElement,
   easing : Easing,
-  infiniteScroll: boolean,
-  lockX : boolean,
-  lockY : boolean,
-  boundaries : Boundries,
-  autoBoundaries : boolean,
   autoplay : boolean,
   aion : Aion | null,
   touchMultiplier : number,
   smoothDirectionChange : boolean,
   scale : number,
   threshold : Vec2,
-  precision : number,
 }
 
 export interface Vec2 {
@@ -49,4 +43,5 @@ export interface HadesPlugin {
   scroll? : Function,    // Called at the end of scroll handler
   preFrame? : Function,  // Called at the start of frame handler
   render? : Function,    // Called at the end of frame handler for render
+  destroy? : Function,   // Called when the main Hades instance is destroyed
 }
