@@ -38,7 +38,7 @@
   "homepage": "https://github.com/Adoratorio/hades#readme",
   "dependencies": {
     "@adoratorio/aion": "^0.3.3",
-    "@adoratorio/hermes": "^0.1.35"
+    "@adoratorio/hermes": "^1.0.0"
   },
   "devDependencies": {
     "typescript": "^4.8.4"
