@@ -28,11 +28,11 @@ class VirtualRender implements HadesPlugin {
     this.options.scrollNode.style.backfaceVisibility = 'hidden';
   }
 
-  register(context : Hades) {
+  public register(context : Hades) : void {
     this.context = context;
   }
 
-  preFrame(context : Hades) {
+  public preFrame(context : Hades) : void {
     // If boundires are autosetted use the container dimensions
     if (this.options.autoBoundaries) {
       const containerRect = this.options.scrollNode.getBoundingClientRect();
@@ -45,7 +45,7 @@ class VirtualRender implements HadesPlugin {
     }
   }
 
-  render(context : Hades) : void {
+  public render(context : Hades) : void {
     const px = parseFloat((this.options.lockX ? 0 : context.amount.x * -1).toFixed(this.options.precision));
     const py = parseFloat((this.options.lockY ? 0 : context.amount.y * -1).toFixed(this.options.precision));
     const prop = `translate3d(${px}px, ${py}px, 0px)`;
@@ -55,7 +55,7 @@ class VirtualRender implements HadesPlugin {
     }
   }
 
-  scroll(context : Hades) {
+  public scroll(context : Hades) : void {
     // Clamp the external temp  to be inside the boundaries if not infinite scrolling
     if (!this.options.infiniteScroll) {
       context.internalTemp = {
