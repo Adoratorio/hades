@@ -204,6 +204,10 @@ class Hades {
     return this.plugins;
   }
 
+  public getPlugin(name : string) : HadesPlugin | undefined {
+    return this.plugins.find(plugin => plugin.name === name);
+  }
+
   public play() : void {
     this.running = true;
   }

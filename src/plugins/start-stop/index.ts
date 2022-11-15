@@ -10,6 +10,8 @@ class StartStop implements HadesPlugin {
   private startNeedEmission : boolean = true;
   private stopNeedEmission : boolean = false;
 
+  public name : string = 'StartStop';
+
   constructor(options : Partial<StartStopOptions>) {
     const defaults : StartStopOptions = {
       emitGlobal: false,

@@ -7,6 +7,8 @@ class VirtualRender implements HadesPlugin {
   private context : Hades | null = null;
   private options : VirtualRenderOptions;
 
+  public name : string = 'VirtualRender';
+
   constructor(options : Partial<VirtualRenderOptions>) {
     const defaults : VirtualRenderOptions = {
       scrollNode: document.body as HTMLElement,
@@ -74,6 +76,10 @@ class VirtualRender implements HadesPlugin {
   }
 
   // Common getters and setters
+
+  public get boundaries() {
+    return this.options.boundaries;
+  }
 
   public set infiniteScroll(infiniteScroll : boolean) {
     this.options.infiniteScroll = infiniteScroll;
