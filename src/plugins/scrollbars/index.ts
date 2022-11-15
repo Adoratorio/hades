@@ -1,239 +1,251 @@
-// import Hades from './';
-// import {
-//   Vec2,
-//   ScrollbarOptions,
-//   Track,
-// } from './declarations';
+import Hades from '../../';
+import VirtualRender from '../virtual-render';
+import { HadesPlugin, Vec2 } from '../../declarations';
+import style from './style';
+import { ScrollbarsOptions, TRACK, Track } from './declarations';
 
-// import style from './style';
+class Scrollbars implements HadesPlugin {
+  private options : ScrollbarsOptions;
+  private context : Hades | null = null;
+  private virtual : VirtualRender | undefined = undefined;
+  private wrapper : HTMLElement | null = null;
+  private style : string = style;
 
-// class Scrollbar {
-//   private options : ScrollbarOptions;
-//   private style : string;
-//   private hades : Hades;
-//   private wrapper : HTMLElement | null = null;
-//   private viewport : HTMLElement;
+  private trackX : Track = { wrapper: null, thumb: null, thumbSize: 0, ratio: 0, drag: false, };
+  private trackY : Track = { wrapper: null, thumb: null, thumbSize: 0, ratio: 0, drag: false, };
 
-//   private trackX : Track = { wrapper: null, thumb: null, thumbSize: 0, ratio: 0, drag: false, };
-//   private trackY : Track = { wrapper: null, thumb: null, thumbSize: 0, ratio: 0, drag: false, };
+  private drag : Boolean = false;
 
-//   private drag : Boolean;
+  private detectPositionHandler : any;
+  private dragStartHandler : any;
+  private dragEndHandler : any;
 
-//   private detectPositionHandler : any;
-//   private dragStartHandler : any;
-//   private dragEndHandler : any;
+  public name : string = 'Scrollbars'
 
-//   constructor(options: ScrollbarOptions, hades: Hades, viewport : HTMLElement) {
-//     this.options = options;
-//     this.style = style;
-//     this.hades = hades;
-//     this.viewport = viewport as HTMLElement;
+  constructor(options: Partial<ScrollbarsOptions>) {
+    const defaults : ScrollbarsOptions = {
+      viewport: document.body as HTMLElement,
+      tracks: [TRACK.Y],
+    };
+    this.options = { ...defaults, ...options };
 
-//     this.drag = false;
+    this.detectPositionHandler = (event : MouseEvent) => this.detectPosition(event);
+    this.dragStartHandler = (event : MouseEvent) => this.dragStart(event);
+    this.dragEndHandler = (event : MouseEvent) => this.dragEnd(event);
+  }
 
-//     this.detectPositionHandler = (event : MouseEvent) => this.detectPosition(event);
-//     this.dragStartHandler = (event : MouseEvent) => this.dragStart(event);
-//     this.dragEndHandler = (event : MouseEvent) => this.dragEnd(event);
+  public register(context : Hades) : void {
+    this.virtual = (context.getPlugin('VirtualRender') as VirtualRender);
 
-//     this.init();
-//   }
+    if (!this.virtual) {
+      throw new Error('Cannot initialize scrollbar without Virtual Render Plugin');
+    }
 
-//   private init() {
-//     this.appendStyle();
-//     this.appendDom();
+    this.context = context;
 
-//     if (!window.matchMedia('(pointer: coarse) and (hover: none)').matches) {
-//       this.attachEvents();
-//     }
-//   };
+    this.appendStyle();
+    this.appendDom();
 
-//   private appendDom() {
-//     const scrollbar = document.createElement('div');
-//     scrollbar.classList.add('scrollbar__wrapper');
-//     this.viewport.append(scrollbar);
+    if (!window.matchMedia('(pointer: coarse) and (hover: none)').matches) {
+      this.attachEvents();
+    }
+  };
 
-//     this.options.tracks.forEach((track) => {
-//       const wrapper = document.createElement('div');
-//       wrapper.setAttribute('data-scrollbar', `track-${track}`);
+  private appendDom() {
+    const scrollbar = document.createElement('div');
+    scrollbar.classList.add('scrollbar__wrapper');
+    this.options.viewport.append(scrollbar);
 
-//       const thumb = document.createElement('div');
-//       thumb.classList.add('scrollbar__thumb');
+    this.options.tracks.forEach((track) => {
+      const wrapper = document.createElement('div');
+      wrapper.setAttribute('data-scrollbar', `track-${track}`);
 
-//       wrapper.append(thumb);
-//       scrollbar.append(wrapper);
+      const thumb = document.createElement('div');
+      thumb.classList.add('scrollbar__thumb');
 
-//       this.wrapper = scrollbar;
+      wrapper.append(thumb);
+      scrollbar.append(wrapper);
 
-//       if (track === 'x') {
-//         const thumbSize = thumb.getBoundingClientRect().width;
+      this.wrapper = scrollbar;
 
-//         this.trackX = {
-//           wrapper,
-//           thumb,
-//           thumbSize,
-//           ratio: 0,
-//           drag: false,
-//         };
-//       }
-//       if (track === 'y') {
-//         const thumbSize = thumb.getBoundingClientRect().height;
+      if (track === 'x') {
+        const thumbSize = thumb.getBoundingClientRect().width;
 
-//         this.trackY = {
-//           wrapper,
-//           thumb,
-//           thumbSize,
-//           ratio: 0,
-//           drag: false,
-//         };
-//       }
-//     });
-//   };
+        this.trackX = {
+          wrapper,
+          thumb,
+          thumbSize,
+          ratio: 0,
+          drag: false,
+        };
+      }
+      if (track === 'y') {
+        const thumbSize = thumb.getBoundingClientRect().height;
 
-//   private appendStyle() {
-//     const style = document.createElement('style');
-//     style.id = 'hades-style';
-//     style.textContent = this.style;
+        this.trackY = {
+          wrapper,
+          thumb,
+          thumbSize,
+          ratio: 0,
+          drag: false,
+        };
+      }
+    });
+  };
 
-//     if (document.head) document.head.appendChild(style);
-//   };
+  private appendStyle() {
+    const style = document.createElement('style');
+    style.id = 'hades-style';
+    style.textContent = this.style;
 
-//   private attachEvents() {
-//     if (this.trackX.wrapper !== null && this.trackX.thumb !== null) {
-//       this.trackX.wrapper.addEventListener('click', this.detectPositionHandler);
+    if (document.head) document.head.appendChild(style);
+  };
 
-//       this.trackX.wrapper.addEventListener('mousedown', this.dragStartHandler);
-//     }
-//     if (this.trackY.wrapper !== null && this.trackY.thumb !== null) {
-//       this.trackY.wrapper.addEventListener('click', this.detectPositionHandler);
+  private attachEvents() {
+    if (this.trackX.wrapper !== null && this.trackX.thumb !== null) {
+      this.trackX.wrapper.addEventListener('click', this.detectPositionHandler);
+      this.trackX.wrapper.addEventListener('mousedown', this.dragStartHandler);
+    }
+    if (this.trackY.wrapper !== null && this.trackY.thumb !== null) {
+      this.trackY.wrapper.addEventListener('click', this.detectPositionHandler);
+      this.trackY.wrapper.addEventListener('mousedown', this.dragStartHandler);
+    }
+  }
 
-//       this.trackY.wrapper.addEventListener('mousedown', this.dragStartHandler);
-//     }
-//   }
+  public render() {
+    if (this.context && this.virtual && (this.trackX.wrapper !== null && this.trackX.thumb !== null)) {
+      const ratio = this.context.amount.x / this.virtual.boundaries.max.x;
+      const { width } = this.trackX.wrapper.getBoundingClientRect();
 
-//   public listen(amount : Vec2) {
-//     if (this.trackX.wrapper !== null && this.trackX.thumb !== null) {
-//       const ratio = amount.x / this.hades.boundaries.max.x;
-//       const { width } = this.trackX.wrapper.getBoundingClientRect();
+      const translate = (width - this.trackX.thumbSize) * ratio;
 
-//       const translate = (width - this.trackX.thumbSize) * ratio;
+      this.trackX.thumb.style.transform = `translate3d(${translate}px, 0px, 0px)`;
 
-//       this.trackX.thumb.style.transform = `translate3d(${translate}px, 0px, 0px)`;
+      if (ratio === this.trackX.ratio) {
+        this.trackX.wrapper.classList.remove('show');
+      } else {
+        this.trackX.wrapper.classList.add('show');
+      }
+      this.trackX.ratio = ratio;
+    }
 
-//       if (ratio === this.trackX.ratio) {
-//         this.trackX.wrapper.classList.remove('show');
-//       } else {
-//         this.trackX.wrapper.classList.add('show');
-//       }
-//       this.trackX.ratio = ratio;
-//     }
+    if (this.context && this.virtual && (this.trackY.wrapper !== null && this.trackY.thumb !== null)) {
+      const ratio = this.context.amount.y / this.virtual.boundaries.max.y;
+      const { height } = this.trackY.wrapper.getBoundingClientRect();
 
-//     if (this.trackY.wrapper !== null && this.trackY.thumb !== null) {
-//       const ratio = amount.y / this.hades.boundaries.max.y;
-//       const { height } = this.trackY.wrapper.getBoundingClientRect();
+      const translate = (height - this.trackY.thumbSize) * ratio;
 
-//       const translate = (height - this.trackY.thumbSize) * ratio;
+      this.trackY.thumb.style.transform = `translate3d(0px, ${translate}px, 0px)`;
 
-//       this.trackY.thumb.style.transform = `translate3d(0px, ${translate}px, 0px)`;
+      if (ratio === this.trackY.ratio) {
+        this.trackY.wrapper.classList.remove('show');
+      } else {
+        this.trackY.wrapper.classList.add('show');
+      }
+      this.trackY.ratio = ratio;
+    }
+  };
 
-//       if (ratio === this.trackY.ratio) {
-//         this.trackY.wrapper.classList.remove('show');
-//       } else {
-//         this.trackY.wrapper.classList.add('show');
-//       }
-//       this.trackY.ratio = ratio;
-//     }
-//   };
+  private detectPosition(event : MouseEvent) : void {
+    const duration = event.type === 'click' ? 400 : 200;
 
-//   private detectPosition(event : MouseEvent) : void {
-//     const duration = event.type === 'click' ? 400 : 200;
+    if (
+      this.context && this.virtual && (
+        (event.type === 'click' && (<HTMLElement>event.target).dataset.scrollbar === 'track-y')
+        || (event.type === 'mousemove' && this.drag && this.trackY.drag)
+      )
+    ) {
+      if (this.trackY.wrapper !== null && this.trackY.thumb !== null) {
+        const { height } = this.trackY.wrapper.getBoundingClientRect();
 
-//     if ((event.type === 'click' && (<HTMLElement>event.target).dataset.scrollbar === 'track-y') || (event.type === 'mousemove' && this.drag && this.trackY.drag)) {
-//       if (this.trackY.wrapper !== null && this.trackY.thumb !== null) {
-//         const { height } = this.trackY.wrapper.getBoundingClientRect();
+        this.context.scrollTo({
+          y: event.clientY / height * this.virtual.boundaries.max.y,
+        }, duration);
+      }
+    }
 
-//         this.hades.scrollTo({
-//           y: event.clientY / height * this.hades.boundaries.max.y,
-//         }, duration);
-//       }
-//     }
+    if (
+      this.context && this.virtual && (
+        (event.type === 'click' && (<HTMLElement>event.target).dataset.scrollbar === 'track-x')
+        || (event.type === 'mousemove' && this.drag && this.trackX.drag)
+      )
+    ) {
+      if (this.trackX.wrapper !== null && this.trackX.thumb !== null) {
+        const { width } = this.trackX.wrapper.getBoundingClientRect();
 
-//     if ((event.type === 'click' && (<HTMLElement>event.target).dataset.scrollbar === 'track-x') || (event.type === 'mousemove' && this.drag && this.trackX.drag)) {
-//       if (this.trackX.wrapper !== null && this.trackX.thumb !== null) {
-//         const { width } = this.trackX.wrapper.getBoundingClientRect();
+        this.context.scrollTo({
+          x: event.clientX / width * this.virtual.boundaries.max.x,
+        }, duration);
+      }
+    }
+  }
 
-//         this.hades.scrollTo({
-//           x: event.clientX / width * this.hades.boundaries.max.x,
-//         }, duration);
-//       }
-//     }
-//   }
+  private dragStart(event : MouseEvent) : void {
+    this.drag = true;
 
-//   private dragStart(event : MouseEvent) : void {
-//     this.drag = true;
+    if (this.trackY.wrapper !== null && this.trackY.thumb !== null) {
+      this.trackY.wrapper.classList.add('show');
+      this.trackY.drag = (<HTMLElement>(<HTMLElement>event.target).parentNode).dataset.scrollbar === 'track-y';
+    }
 
-//     if (this.trackY.wrapper !== null && this.trackY.thumb !== null) {
-//       this.trackY.wrapper.classList.add('show');
-//       this.trackY.drag = (<HTMLElement>(<HTMLElement>event.target).parentNode).dataset.scrollbar === 'track-y';
-//     }
+    if (this.trackX.wrapper !== null && this.trackX.thumb !== null) {
+      this.trackX.wrapper.classList.add('show');
+      this.trackX.drag = (<HTMLElement>(<HTMLElement>event.target).parentNode).dataset.scrollbar === 'track-x';
+    }
 
-//     if (this.trackX.wrapper !== null && this.trackX.thumb !== null) {
-//       this.trackX.wrapper.classList.add('show');
-//       this.trackX.drag = (<HTMLElement>(<HTMLElement>event.target).parentNode).dataset.scrollbar === 'track-x';
-//     }
+    document.body.addEventListener('mousemove', this.detectPositionHandler);
+    document.body.addEventListener('mouseup', this.dragEndHandler);
 
-//     document.body.addEventListener('mousemove', this.detectPositionHandler);
-//     document.body.addEventListener('mouseup', this.dragEndHandler);
+    document.addEventListener('mouseleave', this.dragEndHandler);
+    document.body.addEventListener('mouseleave', this.dragEndHandler);
+  }
 
-//     document.addEventListener('mouseleave', this.dragEndHandler);
-//     document.body.addEventListener('mouseleave', this.dragEndHandler);
-//   }
+  private dragEnd(event : MouseEvent) : void {
+    this.drag = false;
 
-//   private dragEnd(event : MouseEvent) : void {
-//     this.drag = false;
+    if (this.trackY.wrapper !== null && this.trackY.thumb !== null) {
+      this.trackY.wrapper.classList.remove('show');
+      this.trackY.drag = false;
+    }
 
-//     if (this.trackY.wrapper !== null && this.trackY.thumb !== null) {
-//       this.trackY.wrapper.classList.remove('show');
-//       this.trackY.drag = false;
-//     }
+    if (this.trackX.wrapper !== null && this.trackX.thumb !== null) {
+      this.trackX.wrapper.classList.remove('show');
+      this.trackX.drag = false;
+    }
 
-//     if (this.trackX.wrapper !== null && this.trackX.thumb !== null) {
-//       this.trackX.wrapper.classList.remove('show');
-//       this.trackX.drag = false;
-//     }
+    document.body.removeEventListener('mousemove', this.detectPositionHandler);
+    document.body.removeEventListener('mouseup', this.dragEndHandler);
 
-//     document.body.removeEventListener('mousemove', this.detectPositionHandler);
-//     document.body.removeEventListener('mouseup', this.dragEndHandler);
+    document.removeEventListener('mouseleave', this.dragEndHandler);
+    document.body.removeEventListener('mouseleave', this.dragEndHandler);
+  }
 
-//     document.removeEventListener('mouseleave', this.dragEndHandler);
-//     document.body.removeEventListener('mouseleave', this.dragEndHandler);
-//   }
+  public destroy() {
+    if (this.trackX.wrapper !== null && this.trackX.thumb !== null) {
+      this.trackX.wrapper.removeEventListener('click', this.detectPositionHandler);
 
-//   public destroy() {
-//     if (this.trackX.wrapper !== null && this.trackX.thumb !== null) {
-//       this.trackX.wrapper.removeEventListener('click', this.detectPositionHandler);
+      this.trackX.wrapper.removeEventListener('mousedown', this.dragStartHandler);
+    }
+    if (this.trackY.wrapper !== null && this.trackY.thumb !== null) {
+      this.trackY.wrapper.removeEventListener('click', this.detectPositionHandler);
 
-//       this.trackX.wrapper.removeEventListener('mousedown', this.dragStartHandler);
-//     }
-//     if (this.trackY.wrapper !== null && this.trackY.thumb !== null) {
-//       this.trackY.wrapper.removeEventListener('click', this.detectPositionHandler);
+      this.trackY.wrapper.removeEventListener('mousedown', this.dragStartHandler);
+    }
 
-//       this.trackY.wrapper.removeEventListener('mousedown', this.dragStartHandler);
-//     }
+    document.body.removeEventListener('mousemove', this.detectPositionHandler);
+    document.body.removeEventListener('mouseup', this.dragEndHandler);
 
-//     document.body.removeEventListener('mousemove', this.detectPositionHandler);
-//     document.body.removeEventListener('mouseup', this.dragEndHandler);
+    document.removeEventListener('mouseleave', this.dragEndHandler);
+    document.body.removeEventListener('mouseleave', this.dragEndHandler);
 
-//     document.removeEventListener('mouseleave', this.dragEndHandler);
-//     document.body.removeEventListener('mouseleave', this.dragEndHandler);
+    const style = document.getElementById('hades-style');
 
-//     const style = document.getElementById('hades-style');
+    if (!style || !style.parentNode) return;
 
-//     if (!style || !style.parentNode) return;
+    style.parentNode.removeChild(style);
 
-//     style.parentNode.removeChild(style);
+    if (this.wrapper !== null) this.wrapper.remove();
+  }
+}
 
-//     if (this.wrapper !== null) this.wrapper.remove();
-//   }
-// }
-
-// export default Scrollbar;
+export default Scrollbars;
