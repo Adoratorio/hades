@@ -51,7 +51,7 @@ class Scrollbars implements HadesPlugin {
     }
   };
 
-  private appendDom() {
+  private appendDom() : void {
     const scrollbar = document.createElement('div');
     scrollbar.classList.add('scrollbar__wrapper');
     this.options.viewport.append(scrollbar);
@@ -93,7 +93,7 @@ class Scrollbars implements HadesPlugin {
     });
   };
 
-  private appendStyle() {
+  private appendStyle() : void {
     const style = document.createElement('style');
     style.id = 'hades-style';
     style.textContent = this.style;
@@ -112,7 +112,7 @@ class Scrollbars implements HadesPlugin {
     }
   }
 
-  public render() {
+  public render() : void {
     if (this.context && this.virtual && (this.trackX.wrapper !== null && this.trackX.thumb !== null)) {
       const ratio = this.context.amount.x / this.virtual.boundaries.max.x;
       const { width } = this.trackX.wrapper.getBoundingClientRect();
@@ -220,7 +220,7 @@ class Scrollbars implements HadesPlugin {
     document.body.removeEventListener('mouseleave', this.dragEndHandler);
   }
 
-  public destroy() {
+  public destroy() : void {
     if (this.trackX.wrapper !== null && this.trackX.thumb !== null) {
       this.trackX.wrapper.removeEventListener('click', this.detectPositionHandler);
 
