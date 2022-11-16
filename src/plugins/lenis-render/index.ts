@@ -69,6 +69,10 @@ class LenisRender implements HadesPlugin {
     }
   }
 
+  public scrollTo(context : Hades) {
+    this.isWheelScroll = true; // Force the scroll render on mobile
+  }
+
   public destroy(context : Hades) {
     this.options.scrollNode.removeEventListener('scroll', this.nativeScrollHandler);
   }
