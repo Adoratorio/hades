@@ -180,7 +180,7 @@ class Hades {
     this._amount.y = this._temp.y;
   }
 
-  public scrollTo(position : Partial<Vec2>, duration : number) {
+  public scrollTo(position : Partial<Vec2>, duration : number, prevent : boolean = false) {
     if (duration > 0) {
       this.automaticScrolling = true;
       this.timeline.duration = duration;
@@ -196,6 +196,11 @@ class Hades {
 
     if (typeof position.x !== 'undefined') this._amount.x = position.x;
     if (typeof position.y !== 'undefined') this._amount.y = position.y;
+
+    // Call PLUGIN scrollTo
+    if (!prevent) {
+      this.plugins.forEach((plugin) => plugin.scrollTo && plugin.scrollTo(this, position, duration));
+    }
   }
 
   public registerPlugin(plugin : HadesPlugin) : Array<HadesPlugin> {
