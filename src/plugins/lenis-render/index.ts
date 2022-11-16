@@ -65,7 +65,7 @@ class LenisRender implements HadesPlugin {
       this.context.scrollTo({
         x: (this.options.scrollNode as any)[propX],
         y: (this.options.scrollNode as any)[propY],
-      }, 0);
+      }, 0, true);
     }
   }
 
