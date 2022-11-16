@@ -69,6 +69,10 @@ class LenisRender implements HadesPlugin {
     }
   }
 
+  public destroy(context : Hades) {
+    this.options.scrollNode.removeEventListener('scroll', this.nativeScrollHandler);
+  }
+
   public startRender() : void {
     this.options.renderScroll = true;
   }
