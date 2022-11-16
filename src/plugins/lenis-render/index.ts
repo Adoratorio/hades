@@ -7,11 +7,14 @@ class LenisRender implements HadesPlugin {
   private context : Hades | null = null;
   private options : LenisRenderOptions;
   private nativeScrollHandler : EventListenerOrEventListenerObject;
-  private renderScroll : boolean = true;
+  private isWheelScroll : boolean = false;
 
-  constructor(options : LenisRenderOptions) {
+  public name : string = 'LenisRender';
+
+  constructor(options : Partial<LenisRenderOptions>) {
     const defaults : LenisRenderOptions = {
       scrollNode: window,
+      renderScroll: true,
     };
     this.options = { ...defaults, ...options };
     this.nativeScrollHandler = (e : Event) => this.nativeScroll(e);
@@ -23,30 +26,55 @@ class LenisRender implements HadesPlugin {
     this.options.scrollNode.addEventListener('scroll', this.nativeScrollHandler);
   }
 
-  register(context : Hades) {
+  public register(context : Hades) : void {
     this.context = context;
   }
 
-  wheel(context : Hades, event : HermesEvent) {
-    event.originalEvent.preventDefault();
+  public wheel(context : Hades, event : HermesEvent) : void {
+    if (event.type === 'wheel') {
+      event.originalEvent.preventDefault();
+      this.isWheelScroll = true;
+    } else {
+      this.isWheelScroll = false;
+    }
   }
 
-  render(context : Hades) {
-    if (this.renderScroll) {
+  public render(context : Hades) : void {
+    if (this.options.renderScroll && this.isWheelScroll) {
       this.options.scrollNode.scrollTo(context.amount.x, context.amount.y);
     }
   }
 
-  nativeScroll(event : Event) {
-    // this.renderScroll = false;
-    // if (this.context) {
-    //   const node = this.options.scrollNode === window ? document.body : this.options.scrollNode;
-    //   this.context.scrollTo({
-    //     x: (node as HTMLElement).scrollLeft,
-    //     y: (node as HTMLElement).scrollTop,
-    //   }, 0);
-    // }
-    // this.renderScroll = true;
+  public scroll(context : Hades) : void {
+    // Clamp the external temp  to be inside the boundaries if not infinite scrolling
+    const node = this.options.scrollNode === window ? document.body : this.options.scrollNode;
+    const bound = {
+      x: (node as HTMLElement).scrollWidth - window.innerWidth,
+      y: (node as HTMLElement).scrollHeight - window.innerHeight,
+    };
+    context.internalTemp = {
+      x: Math.min(Math.max(context.internalTemp.x, 0), bound.x),
+      y: Math.min(Math.max(context.internalTemp.y,0), bound.y),
+    }
+  }
+
+  private nativeScroll(event : Event) : void {
+    if (this.context && !this.isWheelScroll) {
+      const propX = this.options.scrollNode === window ? 'scrollX' : 'scrollLeft';
+      const propY = this.options.scrollNode === window ? 'scrollY' : 'scrollTop';
+      this.context.scrollTo({
+        x: (this.options.scrollNode as any)[propX],
+        y: (this.options.scrollNode as any)[propY],
+      }, 0);
+    }
+  }
+
+  public startRender() : void {
+    this.options.renderScroll = true;
+  }
+
+  public stopRender() : void {
+    this.options.renderScroll = false;
   }
 }
 
