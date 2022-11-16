@@ -51,6 +51,7 @@ class Hades {
         x: 0,
         y: 3,
       },
+      invert: false,
     };
     this.options = { ...defaults, ...options };
 
@@ -152,8 +153,8 @@ class Hades {
 
     // Return if is stopped
     if (!this.running) return;
-    if (Math.abs(event.delta.x) < this.options.threshold.x) return;
-    if (Math.abs(event.delta.y) < this.options.threshold.y) return;
+    if (Math.abs(event.delta.x) < this.options.threshold.x) event.delta.x = 0;
+    if (Math.abs(event.delta.y) < this.options.threshold.y) event.delta.y = 0;
 
     // Reset from the scrollTo if needed
     if (this.automaticScrolling) {
@@ -169,8 +170,8 @@ class Hades {
     event.delta.y = event.delta.y * this.options.scale;
 
     // Temporary sum amount
-    this._temp.x = this._amount.x + event.delta.x;
-    this._temp.y = this._amount.y + event.delta.y;
+    this._temp.x = this._amount.x + (!this.options.invert ? event.delta.x : event.delta.y);
+    this._temp.y = this._amount.y + (!this.options.invert ? event.delta.y : event.delta.x);
     
     // Call PLUGIN scroll
     this.plugins.forEach((plugin) => plugin.scroll && plugin.scroll(this, event));
