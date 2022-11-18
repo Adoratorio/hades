@@ -29,7 +29,7 @@ class Hades {
   private prevAmount : Vec2 = { x: 0, y: 0 };
   private automaticScrolling : boolean = false;
   private imediateScrolling : boolean = false;
-  private aionId : string = `hades-frame-${Date.now()}`;
+  private aionId : string = `hades-frame-${performance.now()}`;
   private plugins : Array<HadesPlugin> = [];
 
   public amount : Vec2 = { x: 0, y: 0 };
