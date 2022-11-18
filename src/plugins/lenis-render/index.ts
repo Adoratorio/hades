@@ -2,12 +2,13 @@ import { HermesEvent } from "@adoratorio/hermes/dist/declarations";
 import Hades from "../..";
 import { HadesPlugin } from "../../declarations";
 import { LenisRenderOptions } from "./declarations";
+import { isScrollableElement } from "../../utils";
 
 class LenisRender implements HadesPlugin {
   private context : Hades | null = null;
   private options : LenisRenderOptions;
   private nativeScrollHandler : EventListenerOrEventListenerObject;
-  private isWheelScroll : boolean = false;
+  private isValidEvent : boolean = false;
 
   public name : string = 'LenisRender';
 
@@ -31,21 +32,24 @@ class LenisRender implements HadesPlugin {
   }
 
   public wheel(context : Hades, event : HermesEvent) : void {
-    if (event.type === 'wheel') {
+    if (
+      event.type === 'wheel' &&
+      !isScrollableElement(event.originalEvent.target as HTMLElement)
+    ) {
       event.originalEvent.preventDefault();
-      this.isWheelScroll = true;
+      this.isValidEvent = true;
     } else {
-      this.isWheelScroll = false;
+      this.isValidEvent = false;
     }
   }
 
   public render(context : Hades) : void {
-    if (this.options.renderScroll && this.isWheelScroll) {
+    if (this.options.renderScroll && this.isValidEvent) {
       this.options.scrollNode.scrollTo(context.amount.x, context.amount.y);
     }
   }
 
-  public scroll(context : Hades) : void {
+  public scroll(context : Hades, event : HermesEvent) : void {
     // Clamp the external temp  to be inside the boundaries if not infinite scrolling
     const node = this.options.scrollNode === window ? document.body : this.options.scrollNode;
     const bound = {
@@ -59,7 +63,7 @@ class LenisRender implements HadesPlugin {
   }
 
   private nativeScroll(event : Event) : void {
-    if (this.context && !this.isWheelScroll) {
+    if (this.context && !this.isValidEvent) {
       const propX = this.options.scrollNode === window ? 'scrollX' : 'scrollLeft';
       const propY = this.options.scrollNode === window ? 'scrollY' : 'scrollTop';
       this.context.scrollTo({
@@ -70,7 +74,7 @@ class LenisRender implements HadesPlugin {
   }
 
   public scrollTo(context : Hades) {
-    this.isWheelScroll = true; // Force the scroll render on mobile
+    this.isValidEvent = true; // Force the scroll render on mobile
   }
 
   public destroy(context : Hades) {
