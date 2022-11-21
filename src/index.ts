@@ -10,7 +10,6 @@ import {
   HadesPlugin,
 } from "./declarations";
 import Easings from "./easing";
-import { isScrollableElement } from './utils';
 
 class Hades {
   static EASING = Easings;
@@ -149,11 +148,10 @@ class Hades {
   }
 
   private scroll(event : HermesEvent) : void {
-    // Call PLUGIN wheel
-    this.plugins.forEach((plugin) => plugin.wheel && plugin.wheel(this, event));
-
-    // Check if the event has been triggered on a scrollable element
-    if (isScrollableElement(event.originalEvent.target as HTMLElement)) return;
+    // Call PLUGIN wheel, can return true to prevent proceeding
+    let prevent : boolean = false;
+    this.plugins.forEach((plugin) => { if (plugin.wheel) prevent = plugin.wheel(this, event) });
+    if (prevent) return;
 
     // Return if is stopped
     if (!this.running) return;
