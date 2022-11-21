@@ -6,7 +6,7 @@ export interface VirtualRenderOptions {
   lockY : boolean,
   renderScroll : boolean,
   infiniteScroll: boolean,
-  boundaries : Boundaries,
   autoBoundaries: boolean,
+  boundaries : Boundaries,
   precision : number,
 }
