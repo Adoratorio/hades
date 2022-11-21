@@ -166,3 +166,78 @@ Set whether to use smooth direction change or not.
 #### invert
 • Type `boolean`
 Set whether to invert the scrollin girections between x and y.
+
+## Plugins
+
+Like we said Hades on its own now doesen't render any scroll. You need to use one of the default plugins to render the scroll or write one on your own.
+
+A Plugin should implement the `HadesPlugin` interface thath is composed by the name of the plugin as a string and some methods thath you can hook into to create custom logic
+
+### register() 
+
+This hook is called when the plugin is register, as first param you will reiceve the `Hades` instance the plugin has been registered on
+
+```typescript
+public register(context : Hades) : void
+```
+
+### wheel() 
+
+This hooek is called whenever a scroll event is fired (can be any `Hermes` event like `wheel` or `keydown`)
+as firts param you'll reiceve the context (same as register) and as second the `HermesEvent` thath caused the call.
+For more info about `HermesEvent` refer to the [Hermes documentation](https://github.com/Adoratorio/hermes).
+
+You can optionally return a boolean value. If true is returned then `Hades` will discard the event and the rest of the logic will be prevented.
+
+```typescript
+public wheel(context : Hades, event : HermesEvent) : boolean
+```
+
+### preScroll()
+
+This hook is called if the scroll event is processed before any of the `Hades` logic is applied.
+
+```typescript
+public preScroll(context : Hades, event : HermesEvent) : void
+```
+
+### scroll()
+
+This hook is called if the scroll event is processed after any of the `Hades` logic is applied.
+You can manipulate the final amount of the scroll to be passed to the next frame using the `internalTemp : Vec2` property of the context
+
+```typescript
+public preScroll(context : Hades, event : HermesEvent) : void
+```
+
+### preFrame()
+
+This hook is called at the start of the frame before applying easing logic on scroll values
+
+```typescript
+public preFrame(context : Hades) : void
+```
+
+### render()
+
+This hook is the core one and is called after all the easing have been applied and here the final values are available to be applied and rendered
+
+```typescript
+public render(context : Hades) : void
+```
+
+### destroy()
+
+This hook is called when `destroy` is called the main instance of `Hades` and should be used to remove all listeners created and to clean up the plugin internal references.
+
+```typescript
+public destroy(context : Hades) : void
+```
+
+### scrollTo()
+
+This hook is called when `scrollTo` is called on the main `Hades` instance and will reiceve the context as well as the position and the duration passed to the original metho call.
+
+```typescript
+public scrollTo(context : Hades, position : Vec2, duration : number) : void
+```
