@@ -2,7 +2,7 @@
 A smooth scrollbar with different renderers like virtual or native, and including a modern renderer using scrollTo (Inspired from [Lenis](https://lenis.studiofreight.com/))
 
 ## Installation
-Hades is written in typescript and available as npm package with the alongside types definitions. So install as always
+`Hades` is written in typescript and available as npm package with the alongside types definitions. So install as always
 
 ```sh
  npm install --save @adoratorio/hades
@@ -24,10 +24,10 @@ import VirtualRender from '@/adoratorio/hades/plugins/virtual-render';
 hades.registerPlugin(new VirtualRender({ /* ... plugin options */ }));
 ```
 
-Internally Hades is using other Adoratorio packages like [Hermes](https://github.com/Adoratorio/hermes) for scroll event handling and normalization and [Aion](https://github.com/Adoratorio/aion) for requestAnimationFrame management so also those packages documentations are worth to check out.
+Internally `Hades` is using other Adoratorio packages like [Hermes](https://github.com/Adoratorio/hermes) for scroll event handling and normalization and [Aion](https://github.com/Adoratorio/aion) for requestAnimationFrame management so also those packages documentations are worth to check out.
 
 ## Available options
-Hades accepts in the constructor an option object with the following possible props.
+`Hades` accepts in the constructor an option object with the following possible props.
 
 **Note: all options are used only in virtual mode, except of course for the _mode_ one**
 
@@ -63,7 +63,7 @@ hades.scrollTo(position : Partial<Vec2>, duration : number, prevent : boolean = 
 
 ### registerPlugin()
 
-Register a plugin inside the current hades instance. Return an array with all the plugins currently registered
+Register a plugin inside the current `Hades` instance. Return an array with all the plugins currently registered
 ```typescript
 hades.registerPlugin(plugin : HadesPlugin) : Array<HadesPlugin>
 ```
@@ -89,14 +89,16 @@ hades.getPlugin(name : String) : HadesPlugin | undefined
 
 ### play()
 
-Allow hades to react to events and update the internal amounts correctly
+Allow `Hades` to react to events and update the internal amounts correctly
+
 ```typescript
 hades.play()
 ```
 
 ### pause()
 
-Prenvent hades to react to events until the play is called again (listeners won't be detached)
+Prenvent `Hades` to react to events until the play is called again (listeners won't be detached)
+
 ```typescript
 hades.pause()
 ```
@@ -104,6 +106,7 @@ hades.pause()
 ### destroy() 
 
 Unregister all the internal plugins and detach all the events, then remove all internal references to other tools
+
 ```typescript
 hades.destroy()
 ```
@@ -133,7 +136,7 @@ Get the current direction of the scroll.
 - Page moving **up** is `1` 
 - Page moving **down** is `-1`.
 
-[Enumerators are also exposed](#DIRECTION) with `Hades.DIRECTION.UP`, `Hades.DIRECTION.DOWN` and an inert enum is exposed `Hades.DIRECTION.INITIAL`.
+Enumerators are also exposed with `Hades.DIRECTION.UP`, `Hades.DIRECTION.DOWN` and an inert enum is exposed `Hades.DIRECTION.INITIAL`.
 
 #### root
 • Type `HTMLElement | Window`
@@ -157,7 +160,7 @@ Use the constructor param for the documentation reference of both params
 
 #### touchMultiplier
 • Type `number`
-Set the touch multiplier passed to Hermes instance.
+Set the touch multiplier passed to `Hermes` instance.
 
 #### smoothDirectionChange
 • Type `boolean`
@@ -169,7 +172,7 @@ Set whether to invert the scrollin girections between x and y.
 
 ## Plugins
 
-Like we said Hades on its own now doesen't render any scroll. You need to use one of the default plugins to render the scroll or write one on your own.
+Like we said `Hades` on its own now doesen't render any scroll. You need to use one of the default plugins to render the scroll or write one on your own.
 
 A Plugin should implement the `HadesPlugin` interface thath is composed by the name of the plugin as a string and some methods thath you can hook into to create custom logic
 
