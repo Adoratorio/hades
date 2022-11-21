@@ -31,16 +31,22 @@ class LenisRender implements HadesPlugin {
     this.context = context;
   }
 
-  public wheel(context : Hades, event : HermesEvent) : void {
+  public wheel(context : Hades, event : HermesEvent) : boolean {
+    // If the node of the event is not the direct child of scrollNode and is a scrollable node
+    // need to prevent the lenis scroll to trigger
     if (
-      event.type === 'wheel' &&
-      !isScrollableElement(event.originalEvent.target as HTMLElement)
-    ) {
+      (event.originalEvent.target as HTMLElement).parentNode !== this.options.scrollNode &&
+      isScrollableElement((event.originalEvent.target as HTMLElement))
+    ) return true;
+
+    if (event.type === 'wheel') {
       event.originalEvent.preventDefault();
       this.isValidEvent = true;
     } else {
       this.isValidEvent = false;
     }
+
+    return false;
   }
 
   public render(context : Hades) : void {
@@ -51,11 +57,13 @@ class LenisRender implements HadesPlugin {
 
   public scroll(context : Hades, event : HermesEvent) : void {
     // Clamp the external temp  to be inside the boundaries if not infinite scrolling
-    const node = this.options.scrollNode === window ? document.body : this.options.scrollNode;
+    const isWindow = this.options.scrollNode === window;
+    const node = (isWindow ? document.body : this.options.scrollNode as HTMLElement);
     const bound = {
-      x: (node as HTMLElement).scrollWidth - window.innerWidth,
-      y: (node as HTMLElement).scrollHeight - window.innerHeight,
+      x: node.scrollWidth - (isWindow ? window.innerWidth : node.clientWidth),
+      y: node.scrollHeight - (isWindow ? window.innerHeight : node.clientHeight),
     };
+
     context.internalTemp = {
       x: Math.min(Math.max(context.internalTemp.x, 0), bound.x),
       y: Math.min(Math.max(context.internalTemp.y,0), bound.y),
