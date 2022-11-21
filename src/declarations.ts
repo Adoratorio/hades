@@ -8,7 +8,7 @@ export enum DIRECTION {
 }
 
 export interface HadesOptions {
-  root : HTMLElement,
+  root : HTMLElement | Window,
   easing : Easing,
   autoplay : boolean,
   aion : Aion | null,
@@ -46,5 +46,5 @@ export interface HadesPlugin {
   preFrame? : Function,  // Called at the start of frame handler
   render? : Function,    // Called at the end of frame handler for render
   destroy? : Function,   // Called when the main Hades instance is destroyed
-  scrollTo? : Function, // Called inside the scroll to function if not prevented
+  scrollTo? : Function,  // Called inside the scroll to function if not prevented
 }

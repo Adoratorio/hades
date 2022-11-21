@@ -271,6 +271,10 @@ class Hades {
     this.options.smoothDirectionChange = smoothDirectionChange;
   }
 
+  public set invert(invert : boolean) {
+    this.options.invert = invert;
+  }
+
   public set internalAmount(values : Vec2) {
     this._amount.x = values.x;
     this._amount.y = values.y;
