@@ -29,10 +29,8 @@ Internally `Hades` is using other Adoratorio packages like [Hermes](https://gith
 ## Available options
 `Hades` accepts in the constructor an option object with the following possible props.
 
-**Note: all options are used only in virtual mode, except of course for the _mode_ one**
-
-| parameter             |                             type                             |                     default                     | description                                                  |
-| :-------------------- | :----------------------------------------------------------: | :---------------------------------------------: | :----------------------------------------------------------- |
+| parameter | type | default | description |
+| :- | :-: | :-: | :- |
 | root | `HTMLElement \| Window` | `document.body` | The DOM element or window on which the event listeners for Hermes will be atached to |
 | easing | `Function` | `Hades.EASING.LINEAR` | A function used to bend the progress over time to match a curve and create more natural scrolling inertia.<br />The function is called with a single parameter being the time normalized in relation with the total duration (`currentTime / totalDuration`) so the value is going from 0 to 1.<br> Eg. for a linear time `function(t) { return t; }`. It's always a advised to use a linear-in eased-out timing function to avoid weird visual artifacts when the scroll starts. <br />[Some enumerators are exposed](#EASING), just for having a bunch of useful functions out of the box.<br />If you wish BezierEasing from [bezier-easing npm package](https://npmjs.com/package/bezier-easing) can be used as easing function. |
 | autoplay | `boolean` | `true` | Autostart the rendering cycle or not. |
