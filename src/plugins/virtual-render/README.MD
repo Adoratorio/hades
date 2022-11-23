@@ -46,14 +46,17 @@ lenisRenderInstance.stopRender()
 
 #### boundaries
 • Type `Boundaries`
+
 Get the current boundaries, also autocalculated one.
 
 ## Instance setters
 
 #### infiniteScroll
 • Type `boolean`
+
 Update the `infiniteScroll` option.
 
 #### boundaries
 • Type `Boundaries`
+
 Update the `boundaries` option.
