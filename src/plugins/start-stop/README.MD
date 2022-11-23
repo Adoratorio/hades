@@ -29,4 +29,5 @@ hades.registerPlugin(new StartStop({
 
 #### still
 • Type `Vec2`
+
 Get the current native `scrollNode` scroll amount.
