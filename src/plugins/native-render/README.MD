@@ -21,4 +21,5 @@ hades.registerPlugin(new NativeRender({
 
 #### native
 • Type `Vec2`
+
 Get the current native `scrollNode` scroll amount.
