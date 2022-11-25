@@ -12,9 +12,9 @@ export interface HadesOptions {
   easing : Easing,
   autoplay : boolean,
   aion : Aion | null,
+  globalMultiplier : number,
   touchMultiplier : number,
   smoothDirectionChange : boolean,
-  scale : number,
   threshold : Vec2,
   invert : boolean,
 }
