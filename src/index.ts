@@ -44,9 +44,9 @@ class Hades {
       },
       autoplay: true,
       aion: null,
+      globalMultiplier: 1,
       touchMultiplier: 1.5,
       smoothDirectionChange: false,
-      scale: 1,
       threshold: {
         x: 0,
         y: 3,
@@ -169,7 +169,8 @@ class Hades {
     this.plugins.forEach((plugin) => plugin.preScroll && plugin.preScroll(this, event));
 
     // Multiply the scroll by the options multiplier
-    event.delta.y = event.delta.y * this.options.scale;
+    event.delta.x = event.delta.x * this.options.globalMultiplier;
+    event.delta.y = event.delta.y * this.options.globalMultiplier;
 
     // Temporary sum amount
     this._temp.x = this._amount.x + (!this.options.invert ? event.delta.x : event.delta.y);
