@@ -208,7 +208,7 @@ This hook is called if the scroll event is processed after any of the `Hades` lo
 You can manipulate the final amount of the scroll to be passed to the next frame using the `internalTemp : Vec2` property of the context
 
 ```typescript
-public preScroll(context : Hades, event : HermesEvent) : void
+public scroll(context : Hades, event : HermesEvent) : void
 ```
 
 ### preFrame()
