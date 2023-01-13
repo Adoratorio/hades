@@ -207,9 +207,17 @@ class Hades {
     }
   }
 
-  public registerPlugin(plugin : HadesPlugin) : Array<HadesPlugin> {
-    if (typeof plugin.register === 'function') plugin.register(this);
-    this.plugins.push(plugin);
+  public registerPlugin(plugin : HadesPlugin | Array<HadesPlugin>) : Array<HadesPlugin> {
+    const register = (plugin : HadesPlugin) => {
+      if (typeof plugin.register === 'function') plugin.register(this);
+      this.plugins.push(plugin);
+    }
+
+    if (Array.isArray(plugin)) {
+      plugin.forEach((plugin) => { register(plugin) });
+    } else {
+      register(plugin);
+    }
     return this.plugins;
   }
 
