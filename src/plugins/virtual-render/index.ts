@@ -23,7 +23,8 @@ class VirtualRender implements HadesPlugin {
     this.options = { ...defaults, ...options };
 
     if (typeof this.options.scrollNode === 'undefined') {
-      throw new Error('Invalid Scroll Node for Virtual Render');
+      this.options.infiniteScroll = true;
+      this.options.autoBoundaries = false;
     }
 
     this.options.scrollNode.style.webkitBackfaceVisibility = 'hidden';
