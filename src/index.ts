@@ -227,10 +227,12 @@ class Hades {
 
   public play() : void {
     this.running = true;
+    this.manager.on(this.scrollHandler);
   }
 
   public pause() : void {
     this.running = false;
+    this.manager.off();
   }
 
   public destroy() : void {
