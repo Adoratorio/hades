@@ -61,9 +61,35 @@ hades.scrollTo(position : Partial<Vec2>, duration : number, prevent : boolean = 
 
 ### registerPlugin()
 
-Register a plugin inside the current `Hades` instance. Return an array with all the plugins currently registered
+Register a plugin inside the current `Hades` instance. Return a string with the registration id, useful for unregister
 ```typescript
-hades.registerPlugin(plugin : HadesPlugin) : Array<HadesPlugin>
+hades.registerPlugin(plugin : HadesPlugin) : string
+```
+
+**Parameters**
+
+| parameter | required | description |
+|:---|:---:|:---|
+| plugin | `HadesPlugin` | The instance of the plugin to register |
+
+### registerPlugins()
+
+Register multiple plugins inside the current `Hades` instance. Return an array of strings with the registration ids in positional corrispondence with the provided plugins array
+```typescript
+hades.registerPlugins(plugin : Array<HadesPlugin>) : Array<string>
+```
+
+**Parameters**
+
+| parameter | required | description |
+|:---|:---:|:---|
+| plugin | `HadesPlugin` | The instance of the plugin to register |
+
+### unregisterPlugin()
+
+Remove a plugin from the current `Hades` instance using the registration id of the plugin. Return `true` if the plugin was found and unregistered
+```typescript
+hades.unregisterPlugin(id : string) : boolean
 ```
 
 **Parameters**

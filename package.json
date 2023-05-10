@@ -1,6 +1,6 @@
 {
   "name": "@adoratorio/hades",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A smooth scrollbar based on Hermes, scroll down 'till hell",
   "main": "dist/index.js",
   "module": "dist/index.js",

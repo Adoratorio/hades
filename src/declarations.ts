@@ -38,6 +38,7 @@ export interface Easing {
 }
 
 export interface HadesPlugin {
+  id? : string,          // The plugin id assigned during registration
   name : string,         // A name to identify the plugin
   register? : Function,  // Called when the plugin is registerd
   wheel? : Function,     // Called every wheel event (can return to prevent proceeding)
