@@ -30,6 +30,7 @@ class Hades {
   private imediateScrolling : boolean = false;
   private aionId : string = `hades-frame-${performance.now()}`;
   private plugins : Array<HadesPlugin> = [];
+  private internalId : number = 0;
 
   public amount : Vec2 = { x: 0, y: 0 };
   public velocity : Vec2 = { x: 0, y: 0 };
@@ -207,18 +208,33 @@ class Hades {
     }
   }
 
-  public registerPlugin(plugin : HadesPlugin | Array<HadesPlugin>) : Array<HadesPlugin> {
-    const register = (plugin : HadesPlugin) => {
-      if (typeof plugin.register === 'function') plugin.register(this);
-      this.plugins.push(plugin);
-    }
-
-    if (Array.isArray(plugin)) {
-      plugin.forEach((plugin) => { register(plugin) });
+  public registerPlugin(plugin : HadesPlugin, id? : string) : string {
+    let i = null;
+    if (typeof id === 'undefined') {
+      i = `hades-plugin-${this.internalId}`;
+      this.internalId += 1;
     } else {
-      register(plugin);
+      i = id;
     }
-    return this.plugins;
+    this.register(plugin, i);
+    return i;
+  }
+
+  public unregisterPlugin(id : string) : boolean {
+    const foundIndex = this.plugins.findIndex((p) => p.id === id);
+    const found = this.plugins[foundIndex];
+    if (typeof found?.destroy === 'function') found.destroy();
+    this.plugins.splice(foundIndex, 1);
+    return foundIndex === -1 ? false : true;
+  }
+
+  registerPlugins(plugins : Array<HadesPlugin>, ids : Array<string>) : Array<string> {
+    const is : Array<string> = [];
+    plugins.forEach((plugin, index) => {
+      is.push(this.registerPlugin(plugin, ids[index]));
+    });
+
+    return is;
   }
 
   public getPlugin(name : string) : HadesPlugin | undefined {
@@ -294,6 +310,12 @@ class Hades {
   public set internalTemp(values : Vec2) {
     this._temp.x = values.x;
     this._temp.y = values.y;
+  }
+
+  private register (plugin : HadesPlugin, id : string) {
+    if (typeof plugin.register === 'function') plugin.register(this);
+    plugin.id = id;
+    this.plugins.push(plugin);
   }
 }
 
