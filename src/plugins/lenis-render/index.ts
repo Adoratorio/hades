@@ -9,6 +9,7 @@ class LenisRender implements HadesPlugin {
   private options : LenisRenderOptions;
   private nativeScrollHandler : EventListenerOrEventListenerObject;
   private isValidEvent : boolean = false;
+  private interval : number | null = null;
 
   public name : string = 'LenisRender';
 
@@ -78,6 +79,12 @@ class LenisRender implements HadesPlugin {
         x: (this.options.scrollNode as any)[propX],
         y: (this.options.scrollNode as any)[propY],
       }, 0, true);
+    }
+
+    // Temporary (?) fix for native scrollbar click
+    if (window) {
+      if (this.interval) window.clearInterval(this.interval);
+      this.interval = window.setTimeout(() => { this.isValidEvent = false }, 100);
     }
   }
 
