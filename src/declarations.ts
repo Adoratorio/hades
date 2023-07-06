@@ -17,6 +17,7 @@ export interface HadesOptions {
   smoothDirectionChange : boolean,
   threshold : Vec2,
   invert : boolean,
+  precision : number,
 }
 
 export interface Vec2 {
