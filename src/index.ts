@@ -74,10 +74,9 @@ class Hades {
       touchMultiplier: this.options.touchMultiplier,
       passive: false,
     });
-    this.manager.on(this.scrollHandler);
 
     // Check and initialize Aion
-    if (this.options.autoplay) this.running = true;
+    if (this.options.autoplay) this.play();
     if (this.options.aion === null || typeof this.options.aion === 'undefined') {
       this.engine = new Aion();
     } else {
