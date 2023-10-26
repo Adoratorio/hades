@@ -57,7 +57,7 @@ hades.scrollTo(position : Partial<Vec2>, duration : number, prevent : boolean = 
 |:---|:---:|:---|
 | position | `Partial<Vec2>` | The x and y value to scroll to |
 | duration | `number` | The total duration in ms used to reach the position values, 0 for immediate update |
-| prevent | `Partial<Vec2>` | If `true` plugins `scrollTo` to won't be called |
+| prevent | `boolean` | If `true` plugins `scrollTo` to won't be called |
 
 ### registerPlugin()
 
