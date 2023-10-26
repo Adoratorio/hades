@@ -222,10 +222,11 @@ class Hades {
 
   public unregisterPlugin(id : string) : boolean {
     const foundIndex = this.plugins.findIndex((p) => p.id === id);
+    if (foundIndex === -1) return false;
     const found = this.plugins[foundIndex];
     if (typeof found?.destroy === 'function') found.destroy();
     this.plugins.splice(foundIndex, 1);
-    return foundIndex === -1 ? false : true;
+    return true;
   }
 
   public registerPlugins(plugins : Array<HadesPlugin>, ids : Array<string>) : Array<string> {
