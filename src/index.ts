@@ -228,7 +228,7 @@ class Hades {
     return foundIndex === -1 ? false : true;
   }
 
-  registerPlugins(plugins : Array<HadesPlugin>, ids : Array<string>) : Array<string> {
+  public registerPlugins(plugins : Array<HadesPlugin>, ids : Array<string>) : Array<string> {
     const is : Array<string> = [];
     plugins.forEach((plugin, index) => {
       is.push(this.registerPlugin(plugin, ids[index]));
