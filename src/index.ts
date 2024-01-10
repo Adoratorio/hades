@@ -242,6 +242,12 @@ class Hades {
     return this.plugins.find(plugin => plugin.name === name);
   }
 
+  public getRenderer() : HadesPlugin | undefined {
+    // Try to retrive the first valid render plugin
+    const valid = ['VirtualRender', 'LenisRender', 'NativeRender'];
+    return this.plugins.find((plugin => valid.includes(plugin.name)));
+  }
+
   public play() : void {
     this.running = true;
     this.manager.on(this.scrollHandler);
