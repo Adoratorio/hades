@@ -291,6 +291,10 @@ class Hades {
     return this.direction.y === DIRECTION.INITIAL && this.direction.x === DIRECTION.INITIAL;
   }
 
+  public get easing() {
+    return this.options.easing;
+  }
+
   // Common setters for setting option on the fly
 
   public set easing(easing : Easing) {
