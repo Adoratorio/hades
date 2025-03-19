@@ -18,7 +18,7 @@
 import DragAndScroll from '@adoratorio/hades/plugins/drag-and-scroll';
 
 hades.registerPlugin(new DragAndScroll({
-  
+  autoHandleEvents: true, // No need to call attach
 }));
 ```
 
