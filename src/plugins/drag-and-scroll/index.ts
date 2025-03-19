@@ -1,5 +1,7 @@
 import Hades from "../..";
 import { HadesPlugin, Vec2 } from "../../declarations";
+import LenisRender from "../lenis-render";
+import VirtualRender from "../virtual-render";
 import { DragAndScrollOptions } from "./declarations";
 
 class DragAndScroll implements HadesPlugin {
@@ -76,23 +78,28 @@ class DragAndScroll implements HadesPlugin {
   private mouseMove(event : MouseEventInit) : void {
     const point : Vec2 = { x: event.clientX as number, y: event.clientY as number };
     
-    if (this.isDragging) {
+    if (this.isDragging && this.context !== null) {
+      // Calculate the delta
       const delta : Vec2 = {
         x: (this.prevPoint.x - point.x) * this.options.multiplier,
         y: (this.prevPoint.y - point.y) * this.options.multiplier,
       };
 
-      if (!this.options.invert) {
-        this.context?.scrollTo({
-          x: this.context.internalAmount.x + delta.x,
-          y: this.context.internalAmount.y + delta.y,
-        }, this.options.smooth ? this.context.easing.duration : 0);
-      } else {
-        this.context?.scrollTo({
-          y: this.context.internalAmount.y + delta.x,
-          x: this.context.internalAmount.x + delta.y,
-        }, this.options.smooth ? this.context.easing.duration : 0);
+      // Clamp the amount using boundaries
+      let tempAmount = {
+        x: this.context.internalAmount.x + (!this.options.invert ? delta.x : delta.y),
+        y: this.context.internalAmount.y + (!this.options.invert ? delta.y : delta.x),
+      };
+
+      // Boundaries for LenisRender and VirtualRender
+      if (this.context && this.context.getRenderer()) {
+        const renderer = this.context.getRenderer() as (LenisRender | VirtualRender);
+        tempAmount.x = Math.min(Math.max(renderer.boundaries.min.x, tempAmount.x), renderer.boundaries.max.x);
+        tempAmount.y = Math.min(Math.max(renderer.boundaries.min.y, tempAmount.y), renderer.boundaries.max.y);
       }
+
+      // Apply the recalculated amount based on boudnaries
+      this.context?.scrollTo(tempAmount, this.options.smooth ? this.context.easing.duration : 0);
     }
 
     this.prevPoint = point;

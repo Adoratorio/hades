@@ -3,6 +3,7 @@ import Hades from "../..";
 import { HadesPlugin } from "../../declarations";
 import { LenisRenderOptions } from "./declarations";
 import { isScrollableElement } from "../../utils";
+import Boundaries from "../../Boundaries";
 
 class LenisRender implements HadesPlugin {
   private context : Hades | null = null;
@@ -108,6 +109,20 @@ class LenisRender implements HadesPlugin {
     node.addEventListener('scroll', this.nativeScrollHandler);
     this.options.scrollNode.removeEventListener('scroll', this.nativeScrollHandler);
     this.options.scrollNode = node;
+  }
+
+  public get boundaries() : Boundaries {
+    if (this.options.scrollNode instanceof Window) {
+      return new Boundaries(
+        0, document.body.scrollWidth - document.body.clientWidth,
+        0, document.body.scrollHeight - document.body.clientHeight,
+      );
+    } else {
+      return new Boundaries(
+        0, (this.options.scrollNode as HTMLElement).scrollLeft - (this.options.scrollNode as HTMLElement).clientWidth,
+        0, (this.options.scrollNode as HTMLElement).scrollHeight - (this.options.scrollNode as HTMLElement).clientHeight,
+      );
+    }
   }
 }
 
