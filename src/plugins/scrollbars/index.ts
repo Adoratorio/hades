@@ -5,36 +5,35 @@ import style from './style';
 import { ScrollbarsOptions, TRACK, Track } from './declarations';
 
 class Scrollbars implements HadesPlugin {
-  private options : ScrollbarsOptions;
-  private context : Hades | null = null;
-  private virtual : VirtualRender | undefined = undefined;
-  private wrapper : HTMLElement | null = null;
-  private style : string = style;
+  private options: ScrollbarsOptions;
+  private context: Hades | null = null;
+  private virtual: VirtualRender | undefined = undefined;
+  private wrapper: HTMLElement | null = null;
+  private style: string = style;
+  private trackX: Track = { wrapper: null, thumb: null, thumbSize: 0, ratio: 0, drag: false, };
+  private trackY: Track = { wrapper: null, thumb: null, thumbSize: 0, ratio: 0, drag: false, };
 
-  private trackX : Track = { wrapper: null, thumb: null, thumbSize: 0, ratio: 0, drag: false, };
-  private trackY : Track = { wrapper: null, thumb: null, thumbSize: 0, ratio: 0, drag: false, };
+  private drag: Boolean = false;
 
-  private drag : Boolean = false;
+  private detectPositionHandler: any;
+  private dragStartHandler: any;
+  private dragEndHandler: any;
 
-  private detectPositionHandler : any;
-  private dragStartHandler : any;
-  private dragEndHandler : any;
-
-  public name : string = 'Scrollbars'
+  public name: string = 'Scrollbars'
 
   constructor(options: Partial<ScrollbarsOptions>) {
-    const defaults : ScrollbarsOptions = {
+    const defaults: ScrollbarsOptions = {
       viewport: document.body as HTMLElement,
       tracks: [TRACK.Y],
     };
     this.options = { ...defaults, ...options };
 
-    this.detectPositionHandler = (event : MouseEvent) => this.detectPosition(event);
-    this.dragStartHandler = (event : MouseEvent) => this.dragStart(event);
-    this.dragEndHandler = (event : MouseEvent) => this.dragEnd(event);
+    this.detectPositionHandler = (event: MouseEvent) => this.detectPosition(event);
+    this.dragStartHandler = (event: MouseEvent) => this.dragStart(event);
+    this.dragEndHandler = (event: MouseEvent) => this.dragEnd(event);
   }
 
-  public register(context : Hades) : void {
+  public register(context: Hades): void {
     this.virtual = (context.getPlugin('VirtualRender') as VirtualRender);
 
     if (!this.virtual) {
@@ -51,7 +50,7 @@ class Scrollbars implements HadesPlugin {
     }
   };
 
-  private appendDom() : void {
+  private appendDom(): void {
     const scrollbar = document.createElement('div');
     scrollbar.classList.add('scrollbar__wrapper');
     this.options.viewport.append(scrollbar);
@@ -93,7 +92,7 @@ class Scrollbars implements HadesPlugin {
     });
   };
 
-  private appendStyle() : void {
+  private appendStyle(): void {
     const style = document.createElement('style');
     style.id = 'hades-style';
     style.textContent = this.style;
@@ -101,7 +100,7 @@ class Scrollbars implements HadesPlugin {
     if (document.head) document.head.appendChild(style);
   };
 
-  private attachEvents() {
+  private attachEvents(): void {
     if (this.trackX.wrapper !== null && this.trackX.thumb !== null) {
       this.trackX.wrapper.addEventListener('click', this.detectPositionHandler);
       this.trackX.wrapper.addEventListener('mousedown', this.dragStartHandler);
@@ -112,7 +111,7 @@ class Scrollbars implements HadesPlugin {
     }
   }
 
-  public render() : void {
+  public render(): void {
     if (this.context && this.virtual && (this.trackX.wrapper !== null && this.trackX.thumb !== null)) {
       const ratio = this.context.amount.x / this.virtual.boundaries.max.x;
       const { width } = this.trackX.wrapper.getBoundingClientRect();
@@ -146,7 +145,7 @@ class Scrollbars implements HadesPlugin {
     }
   };
 
-  private detectPosition(event : MouseEvent) : void {
+  private detectPosition(event: MouseEvent): void {
     const duration = event.type === 'click' ? 400 : 200;
 
     if (
@@ -180,7 +179,7 @@ class Scrollbars implements HadesPlugin {
     }
   }
 
-  private dragStart(event : MouseEvent) : void {
+  private dragStart(event: MouseEvent): void {
     this.drag = true;
 
     if (this.trackY.wrapper !== null && this.trackY.thumb !== null) {
@@ -200,7 +199,7 @@ class Scrollbars implements HadesPlugin {
     document.body.addEventListener('mouseleave', this.dragEndHandler);
   }
 
-  private dragEnd(event : MouseEvent) : void {
+  private dragEnd(event: MouseEvent): void {
     this.drag = false;
 
     if (this.trackY.wrapper !== null && this.trackY.thumb !== null) {
@@ -220,7 +219,7 @@ class Scrollbars implements HadesPlugin {
     document.body.removeEventListener('mouseleave', this.dragEndHandler);
   }
 
-  public destroy() : void {
+  public destroy(): void {
     if (this.trackX.wrapper !== null && this.trackX.thumb !== null) {
       this.trackX.wrapper.removeEventListener('click', this.detectPositionHandler);
 

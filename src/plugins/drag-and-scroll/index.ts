@@ -5,19 +5,19 @@ import VirtualRender from "../virtual-render";
 import { DragAndScrollOptions } from "./declarations";
 
 class DragAndScroll implements HadesPlugin {
-  private context : Hades | null = null;
-  private options : DragAndScrollOptions;
-  private eventNode : HTMLElement | Window | null = null;
-  private mouseDownHandler : EventListenerOrEventListenerObject;
-  private mouseMoveHandler : EventListenerOrEventListenerObject;
-  private mouseUpHandler : EventListenerOrEventListenerObject;
-  private isDragging : Boolean = false;
-  private prevPoint : Vec2 = { x: 0, y: 0 };
+  private context: Hades | null = null;
+  private options: DragAndScrollOptions;
+  private eventNode: HTMLElement | Window | null = null;
+  private mouseDownHandler: EventListenerOrEventListenerObject;
+  private mouseMoveHandler: EventListenerOrEventListenerObject;
+  private mouseUpHandler: EventListenerOrEventListenerObject;
+  private isDragging: Boolean = false;
+  private prevPoint: Vec2 = { x: 0, y: 0 };
 
-  public name : string = 'DragAndScroll';
+  public name: string = 'DragAndScroll';
 
-  constructor(options : Partial<DragAndScrollOptions>) {
-    const defaults : DragAndScrollOptions = {
+  constructor(options: Partial<DragAndScrollOptions>) {
+    const defaults: DragAndScrollOptions = {
       proxyNode: null,
       changeCursor: false,
       multiplier: 1,
@@ -28,12 +28,12 @@ class DragAndScroll implements HadesPlugin {
 
     this.options = { ...defaults, ...options };
 
-    this.mouseDownHandler = (e : MouseEventInit) => this.mouseDown(e);
+    this.mouseDownHandler = (e: MouseEventInit) => this.mouseDown(e);
     this.mouseMoveHandler = (e: MouseEventInit) => this.mouseMove(e);
     this.mouseUpHandler = (e: MouseEventInit) => this.mouseUp(e);
   }
 
-  public register(context : Hades) : void {
+  public register(context: Hades): void {
     this.context = context;
 
     if (this.options.autoHandleEvents) this.attach();
@@ -68,19 +68,19 @@ class DragAndScroll implements HadesPlugin {
     this.eventNode?.removeEventListener('mouseleave', this.mouseUpHandler);
   }
 
-  private mouseDown(event : MouseEventInit) : void {
+  private mouseDown(event: MouseEventInit): void {
     this.isDragging = true;
     this.prevPoint = { x: event.clientX as number, y: event.clientY as number };
 
     if (this.options.changeCursor) (this.eventNode as HTMLElement).style.cursor = 'grabbing';
   }
 
-  private mouseMove(event : MouseEventInit) : void {
-    const point : Vec2 = { x: event.clientX as number, y: event.clientY as number };
+  private mouseMove(event: MouseEventInit): void {
+    const point: Vec2 = { x: event.clientX as number, y: event.clientY as number };
     
     if (this.isDragging && this.context !== null) {
       // Calculate the delta
-      const delta : Vec2 = {
+      const delta: Vec2 = {
         x: (this.prevPoint.x - point.x) * this.options.multiplier,
         y: (this.prevPoint.y - point.y) * this.options.multiplier,
       };
@@ -105,17 +105,17 @@ class DragAndScroll implements HadesPlugin {
     this.prevPoint = point;
   }
 
-  private mouseUp(event : MouseEventInit) : void {
+  private mouseUp(event: MouseEventInit): void {
     this.isDragging = false;
 
     if (this.options.changeCursor) (this.eventNode as HTMLElement).style.cursor = 'grab';
   }
 
-  public destroy() : void {
+  public destroy(): void {
     if (this.options.autoHandleEvents) this.detach();
   }
 
-  private get isTouchDevice() : Boolean {
+  private get isTouchDevice(): Boolean {
     return (('ontouchstart' in window) || (navigator.maxTouchPoints > 0));
   }
 }

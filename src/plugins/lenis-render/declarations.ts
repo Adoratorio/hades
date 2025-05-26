@@ -1,4 +1,4 @@
 export interface LenisRenderOptions {
-  scrollNode : HTMLElement | Window,
-  renderScroll : boolean,
+  scrollNode: HTMLElement | Window,
+  renderScroll: boolean,
 }
