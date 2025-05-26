@@ -1,6 +1,6 @@
 import Hades from '../../';
 import VirtualRender from '../virtual-render';
-import { HadesPlugin, Vec2 } from '../../declarations';
+import { HadesPlugin } from '../../declarations';
 import style from './style';
 import { ScrollbarsOptions, TRACK, Track } from './declarations';
 

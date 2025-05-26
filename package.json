@@ -40,10 +40,10 @@
   },
   "homepage": "https://github.com/Adoratorio/hades#readme",
   "dependencies": {
-    "@adoratorio/aion": "^0.3.3",
+    "@adoratorio/aion": "^0.4.2",
     "@adoratorio/hermes": "^1.0.1"
   },
   "devDependencies": {
-    "typescript": "^4.8.4"
+    "typescript": "^5.3.3"
   }
 }
