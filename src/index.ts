@@ -22,7 +22,7 @@ class Hades {
   private engine : Aion;
   private manager : Hermes;
   private scrollHandler : Function;
-  private frameHandler : Function;
+  private frameHandler : (delta : number, frameId : number) => void;
   private timeline : Timeline;
   private prevDirection : Vec2 = { x: Hades.DIRECTION.INITIAL, y: Hades.DIRECTION.INITIAL };
   private prevAmount : Vec2 = { x: 0, y: 0 };
@@ -78,7 +78,7 @@ class Hades {
     // Check and initialize Aion
     if (this.options.autoplay) this.play();
     if (this.options.aion === null || typeof this.options.aion === 'undefined') {
-      this.engine = new Aion();
+      this.engine = new Aion({});
     } else {
       this.engine = this.options.aion;
     }

@@ -1,5 +1,4 @@
 import Aion from '@adoratorio/aion';
-import Boundries from './Boundaries';
 
 export enum DIRECTION {
   UP = 1,
