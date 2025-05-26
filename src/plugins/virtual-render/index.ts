@@ -6,6 +6,8 @@ import { VirtualRenderOptions } from "./declarations";
 class VirtualRender implements HadesPlugin {
   private context: Hades | null = null;
   private options: VirtualRenderOptions;
+  private lastFrame: number = 0;
+  private readonly REFLOW_THROTTLE = 100;
 
   public name: string = 'VirtualRender';
 
@@ -38,23 +40,31 @@ class VirtualRender implements HadesPlugin {
   public preFrame(context: Hades): void {
     // If boundires are autosetted use the container dimensions
     if (this.options.autoBoundaries) {
-      const containerRect = this.options.scrollNode.getBoundingClientRect();
-      this.options.boundaries = new Boundaries(
-        0,
-        containerRect.width - window.innerWidth,
-        0,
-        containerRect.height - window.innerHeight,
-      );
+      const now = performance.now();
+
+      // Only recalculate boundaries every REFLOW_THROTTLE ms
+      if (now - this.lastFrame > this.REFLOW_THROTTLE) {
+        const containerRect = this.options.scrollNode.getBoundingClientRect();
+        this.options.boundaries = new Boundaries(
+          0,
+          containerRect.width - window.innerWidth,
+          0,
+          containerRect.height - window.innerHeight,
+        );
+        this.lastFrame = now;
+      }
     }
   }
 
   public render(context: Hades): void {
-    const px = parseFloat((this.options.lockX ? 0 : context.amount.x * -1).toFixed(this.options.precision));
-    const py = parseFloat((this.options.lockY ? 0 : context.amount.y * -1).toFixed(this.options.precision));
-    const prop = `translate3d(${px}px, ${py}px, 0px)`;
-
+    // Cache the precision to avoid lookups
+    const { precision } = this.options;
+    const px = parseFloat((this.options.lockX ? 0 : context.amount.x * -1).toFixed(precision));
+    const py = parseFloat((this.options.lockY ? 0 : context.amount.y * -1).toFixed(precision));
+    
+    // Use transform3d for hardware acceleration
     if (this.options.renderScroll) {
-      this.options.scrollNode.style.transform = prop;
+      this.options.scrollNode.style.transform = `translate3d(${px}px,${py}px,0)`;
     }
   }
 

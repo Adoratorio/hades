@@ -7,6 +7,7 @@ class StartStop implements HadesPlugin {
   private _prev: Vec2 = { x: 0, y: 0 };
   private _prevTs: number = 0;
 
+  // @ts-ignore context is not used in this plugin
   private context: Hades | null = null;
   private options: StartStopOptions;
   private startNeedEmission: boolean = true;
