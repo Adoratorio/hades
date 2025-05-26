@@ -4,14 +4,14 @@ export enum TRACK {
 }
 
 export interface Track {
-  wrapper : HTMLElement | null,
-  thumb : HTMLElement | null,
-  thumbSize : number,
-  ratio : number,
-  drag : boolean,
+  wrapper: HTMLElement | null,
+  thumb: HTMLElement | null,
+  thumbSize: number,
+  ratio: number,
+  drag: boolean,
 }
 
 export interface ScrollbarsOptions {
-  viewport : HTMLElement,
-  tracks : Array<TRACK>,
+  viewport: HTMLElement,
+  tracks: Array<TRACK>,
 }

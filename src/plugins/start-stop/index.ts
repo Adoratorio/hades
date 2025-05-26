@@ -3,19 +3,19 @@ import { HadesPlugin, Vec2 } from "../../declarations";
 import { StartStopOptions } from "./declarations";
 
 class StartStop implements HadesPlugin {
-  private _still : boolean = false;
-  private _prev : Vec2 = { x: 0, y: 0 };
-  private _prevTs : number = 0;
+  private _still: boolean = false;
+  private _prev: Vec2 = { x: 0, y: 0 };
+  private _prevTs: number = 0;
 
-  private context : Hades | null = null;
-  private options : StartStopOptions;
-  private startNeedEmission : boolean = true;
-  private stopNeedEmission : boolean = false;
+  private context: Hades | null = null;
+  private options: StartStopOptions;
+  private startNeedEmission: boolean = true;
+  private stopNeedEmission: boolean = false;
 
-  public name : string = 'StartStop';
+  public name: string = 'StartStop';
 
-  constructor(options : Partial<StartStopOptions>) {
-    const defaults : StartStopOptions = {
+  constructor(options: Partial<StartStopOptions>) {
+    const defaults: StartStopOptions = {
       scrollNode: window,
       emitGlobal: false,
       callbacks: {
@@ -29,11 +29,11 @@ class StartStop implements HadesPlugin {
     this.options = { ...defaults, ...options };
   }
 
-  public register(context : Hades) : void {
+  public register(context: Hades): void {
     this.context = context;
   }
 
-  public render(context : Hades) : void {
+  public render(context: Hades): void {
     if (window.matchMedia('(pointer: fine)').matches) {
       const vX = parseFloat(context.velocity.x.toFixed(this.options.precision));
       const vY = parseFloat(context.velocity.y.toFixed(this.options.precision));
@@ -62,7 +62,7 @@ class StartStop implements HadesPlugin {
     }
   }
 
-  private check(x : number, y : number) : void {
+  private check(x: number, y: number): void {
     if (x === 0 && y === 0) {
       this._still = true;
       if (this.stopNeedEmission) {
@@ -82,10 +82,10 @@ class StartStop implements HadesPlugin {
     }
   }
 
-  private emitStillChange(type : string) : void {
+  private emitStillChange(type: string): void {
     if (this.options.emitGlobal) {
-      const eventInit : CustomEventInit = {};
-      const customEvent : CustomEvent = new CustomEvent(`hades-${type}`, eventInit);
+      const eventInit: CustomEventInit = {};
+      const customEvent: CustomEvent = new CustomEvent(`hades-${type}`, eventInit);
       window.dispatchEvent(customEvent);
     }
   }

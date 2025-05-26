@@ -1,4 +1,4 @@
-export const isScrollableElement = (node : HTMLElement) : boolean => {
+export const isScrollableElement = (node: HTMLElement): boolean => {
   const p = node.parentElement as HTMLElement;
   const style = window.getComputedStyle(p);
   return (

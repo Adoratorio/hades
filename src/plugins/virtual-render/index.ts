@@ -4,13 +4,13 @@ import { HadesPlugin } from "../../declarations";
 import { VirtualRenderOptions } from "./declarations";
 
 class VirtualRender implements HadesPlugin {
-  private context : Hades | null = null;
-  private options : VirtualRenderOptions;
+  private context: Hades | null = null;
+  private options: VirtualRenderOptions;
 
-  public name : string = 'VirtualRender';
+  public name: string = 'VirtualRender';
 
-  constructor(options : Partial<VirtualRenderOptions>) {
-    const defaults : VirtualRenderOptions = {
+  constructor(options: Partial<VirtualRenderOptions>) {
+    const defaults: VirtualRenderOptions = {
       scrollNode: document.body as HTMLElement,
       lockX: true,
       lockY: false,
@@ -31,11 +31,11 @@ class VirtualRender implements HadesPlugin {
     this.options.scrollNode.style.backfaceVisibility = 'hidden';
   }
 
-  public register(context : Hades) : void {
+  public register(context: Hades): void {
     this.context = context;
   }
 
-  public preFrame(context : Hades) : void {
+  public preFrame(context: Hades): void {
     // If boundires are autosetted use the container dimensions
     if (this.options.autoBoundaries) {
       const containerRect = this.options.scrollNode.getBoundingClientRect();
@@ -48,7 +48,7 @@ class VirtualRender implements HadesPlugin {
     }
   }
 
-  public render(context : Hades) : void {
+  public render(context: Hades): void {
     const px = parseFloat((this.options.lockX ? 0 : context.amount.x * -1).toFixed(this.options.precision));
     const py = parseFloat((this.options.lockY ? 0 : context.amount.y * -1).toFixed(this.options.precision));
     const prop = `translate3d(${px}px, ${py}px, 0px)`;
@@ -58,7 +58,7 @@ class VirtualRender implements HadesPlugin {
     }
   }
 
-  public scroll(context : Hades) : void {
+  public scroll(context: Hades): void {
     // Clamp the external temp  to be inside the boundaries if not infinite scrolling
     if (!this.options.infiniteScroll) {
       context.internalTemp = {
@@ -68,11 +68,11 @@ class VirtualRender implements HadesPlugin {
     }
   }
 
-  public startRender() : void {
+  public startRender(): void {
     this.options.renderScroll = true;
   }
 
-  public stopRender() : void {
+  public stopRender(): void {
     this.options.renderScroll = false;
   }
 
@@ -82,11 +82,11 @@ class VirtualRender implements HadesPlugin {
     return this.options.boundaries;
   }
 
-  public set infiniteScroll(infiniteScroll : boolean) {
+  public set infiniteScroll(infiniteScroll: boolean) {
     this.options.infiniteScroll = infiniteScroll;
   }
 
-  public set boundaries(boundaries : Boundaries) {
+  public set boundaries(boundaries: Boundaries) {
     this.options.boundaries = boundaries;
 
     if (this.context !== null) {

@@ -1,3 +1,3 @@
 export interface NativeRenderOptions {
-  scrollNode : HTMLElement | Window,
+  scrollNode: HTMLElement | Window,
 }
