@@ -105,6 +105,7 @@ class DragAndScroll implements HadesPlugin {
     this.prevPoint = point;
   }
 
+  // @ts-ignore
   private mouseUp(event: MouseEventInit): void {
     this.isDragging = false;
 
