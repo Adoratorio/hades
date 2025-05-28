@@ -1,6 +1,6 @@
 {
   "name": "@adoratorio/hades",
-  "version": "1.0.20",
+  "version": "1.0.21",
   "description": "A smooth scrollbar based on Hermes, scroll down 'till hell",
   "module": "dist/index.js",
   "exports": {
@@ -40,7 +40,7 @@
   },
   "homepage": "https://github.com/Adoratorio/hades#readme",
   "dependencies": {
-    "@adoratorio/aion": "^0.4.2",
+    "@adoratorio/aion": "^0.4.3",
     "@adoratorio/hermes": "^1.0.1"
   },
   "devDependencies": {
