@@ -33,6 +33,7 @@ class LenisRender implements HadesPlugin {
     this.context = context;
   }
 
+  // @ts-ignore
   public wheel(context: Hades, event: HermesEvent): boolean {
     // If the node of the event is not the direct child of scrollNode and is a scrollable node
     // need to prevent the lenis scroll to trigger
@@ -57,6 +58,7 @@ class LenisRender implements HadesPlugin {
     }
   }
 
+  // @ts-ignore
   public scroll(context: Hades, event: HermesEvent): void {
     // Clamp the external temp  to be inside the boundaries if not infinite scrolling
     const isWindow = this.options.scrollNode === window;
@@ -72,6 +74,7 @@ class LenisRender implements HadesPlugin {
     }
   }
 
+  // @ts-ignore
   private nativeScroll(event: Event): void {
     if (this.context && !this.isValidEvent) {
       const propX = this.options.scrollNode === window ? 'scrollX' : 'scrollLeft';
@@ -89,10 +92,12 @@ class LenisRender implements HadesPlugin {
     }
   }
 
+  // @ts-ignore
   public scrollTo(context: Hades) {
     this.isValidEvent = true; // Force the scroll render on mobile
   }
 
+  // @ts-ignore
   public destroy(context: Hades) {
     this.options.scrollNode.removeEventListener('scroll', this.nativeScrollHandler);
   }

@@ -37,6 +37,7 @@ class VirtualRender implements HadesPlugin {
     this.context = context;
   }
 
+  // @ts-ignore
   public preFrame(context: Hades): void {
     // If boundires are autosetted use the container dimensions
     if (this.options.autoBoundaries) {

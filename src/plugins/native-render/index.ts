@@ -34,10 +34,12 @@ class NativeRender implements HadesPlugin {
     }, 0, true); // Prevent the call for plugin scrollTo
   }
 
+  // @ts-ignore
   public scrollTo(context: Hades, position: Vec2, duration: number): void {
     this.options.scrollNode.scrollTo(position.x, position.y);
   }
 
+  // @ts-ignore
   private nativeScroll(event: Event): void {
     if (this.context) {
       const propX = this.options.scrollNode === window ? 'scrollX' : 'scrollLeft';
@@ -49,6 +51,7 @@ class NativeRender implements HadesPlugin {
     }
   }
 
+  // @ts-ignore
   public destroy(context: Hades): void {
     this.options.scrollNode.removeEventListener('scroll', this.nativeScrollHandler);
   }

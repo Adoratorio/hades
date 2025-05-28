@@ -1,42 +1,90 @@
 {
   "compilerOptions": {
-    /* Language and Environment */
-    "target": "ES6",
-    "lib": ["ES2020", "dom", "dom.iterable"],
-    "module": "esnext",
-    "moduleResolution": "node",
-    // "verbatimModuleSyntax": true,
-    "useDefineForClassFields": true,
+    // === Language & Environment ===
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
 
-    /* Emit */
+    // === Module System ===
+    "allowSyntheticDefaultImports": false,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": false,
+    "allowImportingTsExtensions": false,
+    "resolveJsonModule": true,
+
+    // === Emit ===
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "outDir": "dist",
-    "rootDir": "src",
+    "outDir": "./dist",
+    "rootDir": "./src",
     "removeComments": true,
-    "noEmitOnError": true,
-    "stripInternal": true,
-    "isolatedModules": true,
+    "importHelpers": true,
+    "inlineSourceMap": false,
+    "inlineSources": false,
 
-    /* Type Checking */
+    // === JavaScript Support ===
+    "allowJs": false,
+    "checkJs": false,
+
+    // === Type Checking (Strict Mode) ===
     "strict": true,
-    "noImplicitAny": true,
-    "noImplicitThis": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": false,
-    "noImplicitReturns": true,
+    "exactOptionalPropertyTypes": true,
     "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": false,
     "noUncheckedIndexedAccess": true,
-    // "exactOptionalPropertyTypes": true,
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "useUnknownInCatchVariables": true,
 
-    /* Interop Constraints */
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true
+    // === Modules ===
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"],
+      "@/types": ["src/declarations.ts"]
+    },
+
+    // === Emit Declarations ===
+    "stripInternal": true,
+
+    // === Advanced ===
+    "skipLibCheck": true,
+
+    // === Bundler-specific ===
+    "allowArbitraryExtensions": false,
+
+    // === Projects ===
+    "composite": false,
+    "disableReferencedProjectLoad": true,
+
+    // === Output Formatting ===
+    "noErrorTruncation": true,
+    "preserveWatchOutput": true,
+    "pretty": true,
+
+    // === Completeness ===
+    "skipDefaultLibCheck": true,
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*",
+    "types/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/__tests__/**",
+    "**/__mocks__/**",
+    "examples/**/*",
+    "docs/**/*",
+    "*.config.js",
+    "*.config.ts"
+  ],
 }

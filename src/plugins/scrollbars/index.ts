@@ -199,6 +199,7 @@ class Scrollbars implements HadesPlugin {
     document.body.addEventListener('mouseleave', this.dragEndHandler);
   }
 
+  // @ts-ignore
   private dragEnd(event: MouseEvent): void {
     this.drag = false;
 
