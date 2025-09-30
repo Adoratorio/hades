@@ -127,7 +127,7 @@ class DragAndScroll implements HadesPlugin {
   }
 
   private get isContextPaused(): Boolean {
-    return this.context?.running || true;
+    return this.context?.running ? false : true;
   }
 }
 
