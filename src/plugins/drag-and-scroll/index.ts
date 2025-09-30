@@ -69,6 +69,8 @@ class DragAndScroll implements HadesPlugin {
   }
 
   private mouseDown(event: MouseEventInit): void {
+    if (this.isContextPaused) return;
+
     this.isDragging = true;
     this.prevPoint = { x: event.clientX as number, y: event.clientY as number };
 
@@ -76,6 +78,8 @@ class DragAndScroll implements HadesPlugin {
   }
 
   private mouseMove(event: MouseEventInit): void {
+    if (this.isContextPaused) return;
+
     const point: Vec2 = { x: event.clientX as number, y: event.clientY as number };
     
     if (this.isDragging && this.context !== null) {
@@ -107,6 +111,8 @@ class DragAndScroll implements HadesPlugin {
 
   // @ts-ignore
   private mouseUp(event: MouseEventInit): void {
+    if (this.isContextPaused) return;
+
     this.isDragging = false;
 
     if (this.options.changeCursor) (this.eventNode as HTMLElement).style.cursor = 'grab';
@@ -118,6 +124,10 @@ class DragAndScroll implements HadesPlugin {
 
   private get isTouchDevice(): Boolean {
     return (('ontouchstart' in window) || (navigator.maxTouchPoints > 0));
+  }
+
+  private get isContextPaused(): Boolean {
+    return this.context?.running || true;
   }
 }
 
