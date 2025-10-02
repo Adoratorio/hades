@@ -251,11 +251,15 @@ class Hades {
   public play(): void {
     this.running = true;
     this.manager.on(this.scrollHandler);
+    // Call PLUGIN play hook
+    this.plugins.forEach((plugin) => plugin.play && plugin.play(this));
   }
 
   public pause(): void {
     this.running = false;
     this.manager.off();
+    // Call PLUGIN play hook
+    this.plugins.forEach((plugin) => plugin.pause && plugin.pause(this));
   }
 
   public destroy(): void {
