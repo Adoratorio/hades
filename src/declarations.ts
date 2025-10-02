@@ -48,4 +48,6 @@ export interface HadesPlugin {
   render?: Function,    // Called at the end of frame handler for render
   destroy?: Function,   // Called when the main Hades instance is destroyed
   scrollTo?: Function,  // Called inside the scroll to function if not prevented
+  play?: Function       // Called every time the play method is called on context
+  pause?: Function      // Same as per play but when the context is paused
 }

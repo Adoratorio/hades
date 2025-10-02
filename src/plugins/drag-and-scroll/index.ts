@@ -118,6 +118,14 @@ class DragAndScroll implements HadesPlugin {
     if (this.options.changeCursor) (this.eventNode as HTMLElement).style.cursor = 'grab';
   }
 
+  public play(): void {
+    if (this.options.changeCursor) (this.eventNode as HTMLElement).style.cursor = 'grab';
+  }
+
+  public pause(): void {
+    if (this.options.changeCursor) (this.eventNode as HTMLElement).style.cursor = 'unset';
+  }
+
   public destroy(): void {
     if (this.options.autoHandleEvents) this.detach();
   }
