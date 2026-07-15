@@ -42,7 +42,7 @@
     // === Path aliases ===
     "paths": {
       "@/*": ["./src/*"],
-      "@/types": ["./src/declarations.ts"]
+      "@/types": ["./src/types.ts"]
     },
 
     // === Performance ===

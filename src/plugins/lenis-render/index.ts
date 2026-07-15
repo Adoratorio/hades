@@ -1,8 +1,8 @@
 import Boundaries from '../../Boundaries.ts';
-import { type HadesPlugin, type HermesEvent } from '../../declarations.ts';
+import { type HadesPlugin, type HermesEvent } from '../../types.ts';
 import type Hades from '../../index.ts';
 import { isScrollableElement } from '../../utils.ts';
-import { type LenisRenderOptions } from './declarations.ts';
+import { type LenisRenderOptions } from './types.ts';
 
 class LenisRender implements HadesPlugin {
   private context: Hades | null = null;

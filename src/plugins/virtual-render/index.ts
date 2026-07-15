@@ -1,7 +1,7 @@
 import Boundaries from '../../Boundaries.ts';
-import { type HadesPlugin } from '../../declarations.ts';
+import { type HadesPlugin } from '../../types.ts';
 import type Hades from '../../index.ts';
-import { type VirtualRenderOptions } from './declarations.ts';
+import { type VirtualRenderOptions } from './types.ts';
 
 class VirtualRender implements HadesPlugin {
   private context: Hades | null = null;

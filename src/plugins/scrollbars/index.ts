@@ -1,7 +1,7 @@
-import { type HadesPlugin } from '../../declarations.ts';
+import { type HadesPlugin } from '../../types.ts';
 import type Hades from '../../index.ts';
 import type VirtualRender from '../virtual-render/index.ts';
-import { TRACK, type ScrollbarsOptions, type Track } from './declarations.ts';
+import { TRACK, type ScrollbarsOptions, type Track } from './types.ts';
 import style from './style.ts';
 
 class Scrollbars implements HadesPlugin {

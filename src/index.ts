@@ -9,11 +9,11 @@ import {
   type HermesEvent,
   type Timeline,
   type Vec2,
-} from './declarations.ts';
+} from './types.ts';
 import Easings from './easing.ts';
 
 export { default as Boundaries } from './Boundaries.ts';
-export { DIRECTION } from './declarations.ts';
+export { DIRECTION } from './types.ts';
 export type {
   Aion,
   Easing,
@@ -22,7 +22,7 @@ export type {
   HermesEvent,
   Timeline,
   Vec2,
-} from './declarations.ts';
+} from './types.ts';
 export { default as EASING, type EasingFunction } from './easing.ts';
 
 // `@adoratorio/aion` and `@adoratorio/hermes` ship legacy CJS-style typings:

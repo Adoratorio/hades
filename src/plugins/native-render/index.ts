@@ -1,6 +1,6 @@
-import { type HadesPlugin, type Vec2 } from '../../declarations.ts';
+import { type HadesPlugin, type Vec2 } from '../../types.ts';
 import type Hades from '../../index.ts';
-import { type NativeRenderOptions } from './declarations.ts';
+import { type NativeRenderOptions } from './types.ts';
 
 class NativeRender implements HadesPlugin {
   private _native: Vec2 = { x: 0, y: 0 };

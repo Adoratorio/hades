@@ -1,4 +1,4 @@
-import { type Vec2 } from './declarations.ts';
+import { type Vec2 } from './types.ts';
 
 class Boundaries {
   min: Vec2 = {

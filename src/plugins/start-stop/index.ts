@@ -1,6 +1,6 @@
-import { type HadesPlugin, type Vec2 } from '../../declarations.ts';
+import { type HadesPlugin, type Vec2 } from '../../types.ts';
 import type Hades from '../../index.ts';
-import { type StartStopOptions } from './declarations.ts';
+import { type StartStopOptions } from './types.ts';
 
 class StartStop implements HadesPlugin {
   private _still = false;

@@ -1,8 +1,8 @@
-import { type HadesPlugin, type Vec2 } from '../../declarations.ts';
+import { type HadesPlugin, type Vec2 } from '../../types.ts';
 import type Hades from '../../index.ts';
 import type LenisRender from '../lenis-render/index.ts';
 import type VirtualRender from '../virtual-render/index.ts';
-import { type DragAndScrollOptions } from './declarations.ts';
+import { type DragAndScrollOptions } from './types.ts';
 
 class DragAndScroll implements HadesPlugin {
   private context: Hades | null = null;
