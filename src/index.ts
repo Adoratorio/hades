@@ -119,10 +119,11 @@ class Hades {
     };
     this.amount = current;
 
-    // Calculate the speed
+    // Calculate the speed (guard delta = 0 to avoid NaN/Infinity velocity)
+    const dt = delta || 1;
     this.velocity = {
-      x: (current.x - this.prevAmount.x) / delta,
-      y: (current.y - this.prevAmount.y) / delta,
+      x: (current.x - this.prevAmount.x) / dt,
+      y: (current.y - this.prevAmount.y) / dt,
     }
 
     this.prevAmount = this.amount;
