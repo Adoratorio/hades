@@ -2,22 +2,37 @@
   "name": "@adoratorio/hades",
   "version": "1.0.28",
   "description": "A smooth scrollbar based on Hermes, scroll down 'till hell",
-  "module": "dist/index.js",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.js",
-    "./plugins": "./dist/plugins/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./plugins": {
+      "types": "./dist/plugins/index.d.ts",
+      "import": "./dist/plugins/index.js"
+    },
+    "./dist/*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js"
+    }
   },
-  "types": "dist/index.d.ts",
+  "sideEffects": false,
   "files": [
     "dist/**/*"
   ],
   "scripts": {
-    "build": "rm -rf dist && mkdir dist && tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Adoratorio/hades.git"
+    "build": "rm -rf ./dist && tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint src",
+    "lint:fix": "oxlint --fix src",
+    "format": "oxfmt src",
+    "format:check": "oxfmt --check src",
+    "check": "pnpm run typecheck && pnpm run lint && pnpm run format:check",
+    "prepublishOnly": "pnpm run check && pnpm run build"
   },
   "keywords": [
     "scroll",
@@ -35,15 +50,22 @@
     "Luca Bortolussi <luca@adoratorio.com>"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Adoratorio/hades.git"
+  },
   "bugs": {
     "url": "https://github.com/Adoratorio/hades/issues"
   },
   "homepage": "https://github.com/Adoratorio/hades#readme",
+  "packageManager": "pnpm@11.12.0",
   "dependencies": {
     "@adoratorio/aion": "^0.4.3",
     "@adoratorio/hermes": "^1.0.3"
   },
   "devDependencies": {
-    "typescript": "^5.3.3"
+    "oxfmt": "^0.58.0",
+    "oxlint": "^1.73.0",
+    "typescript": "^7.0.2"
   }
 }

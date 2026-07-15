@@ -1,23 +1,23 @@
-import Hades from "../..";
-import { HadesPlugin, Vec2 } from "../../declarations";
-import { NativeRenderOptions } from "./declarations";
+import { type HadesPlugin, type Vec2 } from '../../declarations.ts';
+import type Hades from '../../index.ts';
+import { type NativeRenderOptions } from './declarations.ts';
 
 class NativeRender implements HadesPlugin {
   private _native: Vec2 = { x: 0, y: 0 };
 
   private context: Hades | null = null;
   private options: NativeRenderOptions;
-  private nativeScrollHandler: EventListenerOrEventListenerObject;
+  private nativeScrollHandler: (event: Event) => void;
 
-  public name: string = 'NativeRender';
+  public name = 'NativeRender';
 
   constructor(options: Partial<NativeRenderOptions>) {
     const defaults: NativeRenderOptions = {
       scrollNode: window,
-    }
+    };
 
     this.options = { ...defaults, ...options };
-    this.nativeScrollHandler = (e: Event) => this.nativeScroll(e);
+    this.nativeScrollHandler = (e: Event): void => this.nativeScroll(e);
 
     this.options.scrollNode.addEventListener('scroll', this.nativeScrollHandler);
   }
@@ -28,31 +28,32 @@ class NativeRender implements HadesPlugin {
 
   public render(context: Hades): void {
     // Use the render cycle to write hades internal amount
-    context.scrollTo({
-      x: this._native.x,
-      y: this._native.y,
-    }, 0, true); // Prevent the call for plugin scrollTo
+    context.scrollTo(
+      {
+        x: this._native.x,
+        y: this._native.y,
+      },
+      0,
+      true,
+    ); // Prevent the call for plugin scrollTo
   }
 
-  // @ts-ignore
-  public scrollTo(context: Hades, position: Vec2, duration: number): void {
-    this.options.scrollNode.scrollTo(position.x, position.y);
+  public scrollTo(_context: Hades, position: Partial<Vec2>): void {
+    // Keep the raw (possibly undefined) values as per original runtime behaviour
+    this.options.scrollNode.scrollTo(position.x as number, position.y as number);
   }
 
-  // @ts-ignore
-  private nativeScroll(event: Event): void {
+  private nativeScroll(_event: Event): void {
     if (this.context) {
-      const propX = this.options.scrollNode === window ? 'scrollX' : 'scrollLeft';
-      const propY = this.options.scrollNode === window ? 'scrollY' : 'scrollTop';
+      const isWindow = this.options.scrollNode === window;
       this._native = {
-        x: (this.options.scrollNode as any)[propX],
-        y: (this.options.scrollNode as any)[propY],
+        x: isWindow ? window.scrollX : (this.options.scrollNode as HTMLElement).scrollLeft,
+        y: isWindow ? window.scrollY : (this.options.scrollNode as HTMLElement).scrollTop,
       };
     }
   }
 
-  // @ts-ignore
-  public destroy(context: Hades): void {
+  public destroy(): void {
     this.options.scrollNode.removeEventListener('scroll', this.nativeScrollHandler);
   }
 

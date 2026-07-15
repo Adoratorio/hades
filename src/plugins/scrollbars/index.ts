@@ -1,8 +1,8 @@
-import Hades from '../../';
-import VirtualRender from '../virtual-render';
-import { HadesPlugin } from '../../declarations';
-import style from './style';
-import { ScrollbarsOptions, TRACK, Track } from './declarations';
+import { type HadesPlugin } from '../../declarations.ts';
+import type Hades from '../../index.ts';
+import type VirtualRender from '../virtual-render/index.ts';
+import { TRACK, type ScrollbarsOptions, type Track } from './declarations.ts';
+import style from './style.ts';
 
 class Scrollbars implements HadesPlugin {
   private options: ScrollbarsOptions;
@@ -10,16 +10,16 @@ class Scrollbars implements HadesPlugin {
   private virtual: VirtualRender | undefined = undefined;
   private wrapper: HTMLElement | null = null;
   private style: string = style;
-  private trackX: Track = { wrapper: null, thumb: null, thumbSize: 0, ratio: 0, drag: false, };
-  private trackY: Track = { wrapper: null, thumb: null, thumbSize: 0, ratio: 0, drag: false, };
+  private trackX: Track = { wrapper: null, thumb: null, thumbSize: 0, ratio: 0, drag: false };
+  private trackY: Track = { wrapper: null, thumb: null, thumbSize: 0, ratio: 0, drag: false };
 
-  private drag: Boolean = false;
+  private drag = false;
 
-  private detectPositionHandler: any;
-  private dragStartHandler: any;
-  private dragEndHandler: any;
+  private detectPositionHandler: (event: MouseEvent) => void;
+  private dragStartHandler: (event: MouseEvent) => void;
+  private dragEndHandler: (event: MouseEvent) => void;
 
-  public name: string = 'Scrollbars'
+  public name = 'Scrollbars';
 
   constructor(options: Partial<ScrollbarsOptions>) {
     const defaults: ScrollbarsOptions = {
@@ -28,13 +28,13 @@ class Scrollbars implements HadesPlugin {
     };
     this.options = { ...defaults, ...options };
 
-    this.detectPositionHandler = (event: MouseEvent) => this.detectPosition(event);
-    this.dragStartHandler = (event: MouseEvent) => this.dragStart(event);
-    this.dragEndHandler = (event: MouseEvent) => this.dragEnd(event);
+    this.detectPositionHandler = (event: MouseEvent): void => this.detectPosition(event);
+    this.dragStartHandler = (event: MouseEvent): void => this.dragStart(event);
+    this.dragEndHandler = (event: MouseEvent): void => this.dragEnd(event);
   }
 
   public register(context: Hades): void {
-    this.virtual = (context.getPlugin('VirtualRender') as VirtualRender);
+    this.virtual = context.getPlugin('VirtualRender') as VirtualRender;
 
     if (!this.virtual) {
       throw new Error('Cannot initialize scrollbar without Virtual Render Plugin');
@@ -48,7 +48,7 @@ class Scrollbars implements HadesPlugin {
     if (!window.matchMedia('(pointer: coarse) and (hover: none)').matches) {
       this.attachEvents();
     }
-  };
+  }
 
   private appendDom(): void {
     const scrollbar = document.createElement('div');
@@ -90,15 +90,17 @@ class Scrollbars implements HadesPlugin {
         };
       }
     });
-  };
+  }
 
   private appendStyle(): void {
-    const style = document.createElement('style');
-    style.id = 'hades-style';
-    style.textContent = this.style;
+    const styleElement = document.createElement('style');
+    styleElement.id = 'hades-style';
+    styleElement.textContent = this.style;
 
-    if (document.head) document.head.appendChild(style);
-  };
+    if (document.head) {
+      document.head.appendChild(styleElement);
+    }
+  }
 
   private attachEvents(): void {
     if (this.trackX.wrapper !== null && this.trackX.thumb !== null) {
@@ -112,7 +114,12 @@ class Scrollbars implements HadesPlugin {
   }
 
   public render(): void {
-    if (this.context && this.virtual && (this.trackX.wrapper !== null && this.trackX.thumb !== null)) {
+    if (
+      this.context &&
+      this.virtual &&
+      this.trackX.wrapper !== null &&
+      this.trackX.thumb !== null
+    ) {
       const ratio = this.context.amount.x / this.virtual.boundaries.max.x;
       const { width } = this.trackX.wrapper.getBoundingClientRect();
 
@@ -120,15 +127,16 @@ class Scrollbars implements HadesPlugin {
 
       this.trackX.thumb.style.transform = `translate3d(${translate}px, 0px, 0px)`;
 
-      if (ratio === this.trackX.ratio) {
-        this.trackX.wrapper.classList.remove('show');
-      } else {
-        this.trackX.wrapper.classList.add('show');
-      }
+      this.trackX.wrapper.classList.toggle('show', !(ratio === this.trackX.ratio));
       this.trackX.ratio = ratio;
     }
 
-    if (this.context && this.virtual && (this.trackY.wrapper !== null && this.trackY.thumb !== null)) {
+    if (
+      this.context &&
+      this.virtual &&
+      this.trackY.wrapper !== null &&
+      this.trackY.thumb !== null
+    ) {
       const ratio = this.context.amount.y / this.virtual.boundaries.max.y;
       const { height } = this.trackY.wrapper.getBoundingClientRect();
 
@@ -136,45 +144,47 @@ class Scrollbars implements HadesPlugin {
 
       this.trackY.thumb.style.transform = `translate3d(0px, ${translate}px, 0px)`;
 
-      if (ratio === this.trackY.ratio) {
-        this.trackY.wrapper.classList.remove('show');
-      } else {
-        this.trackY.wrapper.classList.add('show');
-      }
+      this.trackY.wrapper.classList.toggle('show', !(ratio === this.trackY.ratio));
       this.trackY.ratio = ratio;
     }
-  };
+  }
 
   private detectPosition(event: MouseEvent): void {
     const duration = event.type === 'click' ? 400 : 200;
 
     if (
-      this.context && this.virtual && (
-        (event.type === 'click' && (<HTMLElement>event.target).dataset.scrollbar === 'track-y')
-        || (event.type === 'mousemove' && this.drag && this.trackY.drag)
-      )
+      this.context &&
+      this.virtual &&
+      ((event.type === 'click' && (event.target as HTMLElement).dataset.scrollbar === 'track-y') ||
+        (event.type === 'mousemove' && this.drag && this.trackY.drag))
     ) {
       if (this.trackY.wrapper !== null && this.trackY.thumb !== null) {
         const { height } = this.trackY.wrapper.getBoundingClientRect();
 
-        this.context.scrollTo({
-          y: event.clientY / height * this.virtual.boundaries.max.y,
-        }, duration);
+        this.context.scrollTo(
+          {
+            y: (event.clientY / height) * this.virtual.boundaries.max.y,
+          },
+          duration,
+        );
       }
     }
 
     if (
-      this.context && this.virtual && (
-        (event.type === 'click' && (<HTMLElement>event.target).dataset.scrollbar === 'track-x')
-        || (event.type === 'mousemove' && this.drag && this.trackX.drag)
-      )
+      this.context &&
+      this.virtual &&
+      ((event.type === 'click' && (event.target as HTMLElement).dataset.scrollbar === 'track-x') ||
+        (event.type === 'mousemove' && this.drag && this.trackX.drag))
     ) {
       if (this.trackX.wrapper !== null && this.trackX.thumb !== null) {
         const { width } = this.trackX.wrapper.getBoundingClientRect();
 
-        this.context.scrollTo({
-          x: event.clientX / width * this.virtual.boundaries.max.x,
-        }, duration);
+        this.context.scrollTo(
+          {
+            x: (event.clientX / width) * this.virtual.boundaries.max.x,
+          },
+          duration,
+        );
       }
     }
   }
@@ -184,12 +194,14 @@ class Scrollbars implements HadesPlugin {
 
     if (this.trackY.wrapper !== null && this.trackY.thumb !== null) {
       this.trackY.wrapper.classList.add('show');
-      this.trackY.drag = (<HTMLElement>(<HTMLElement>event.target).parentNode).dataset.scrollbar === 'track-y';
+      this.trackY.drag =
+        ((event.target as HTMLElement).parentNode as HTMLElement).dataset.scrollbar === 'track-y';
     }
 
     if (this.trackX.wrapper !== null && this.trackX.thumb !== null) {
       this.trackX.wrapper.classList.add('show');
-      this.trackX.drag = (<HTMLElement>(<HTMLElement>event.target).parentNode).dataset.scrollbar === 'track-x';
+      this.trackX.drag =
+        ((event.target as HTMLElement).parentNode as HTMLElement).dataset.scrollbar === 'track-x';
     }
 
     document.body.addEventListener('mousemove', this.detectPositionHandler);
@@ -199,8 +211,7 @@ class Scrollbars implements HadesPlugin {
     document.body.addEventListener('mouseleave', this.dragEndHandler);
   }
 
-  // @ts-ignore
-  private dragEnd(event: MouseEvent): void {
+  private dragEnd(_event: MouseEvent): void {
     this.drag = false;
 
     if (this.trackY.wrapper !== null && this.trackY.thumb !== null) {
@@ -238,13 +249,17 @@ class Scrollbars implements HadesPlugin {
     document.removeEventListener('mouseleave', this.dragEndHandler);
     document.body.removeEventListener('mouseleave', this.dragEndHandler);
 
-    const style = document.getElementById('hades-style');
+    const styleElement = document.getElementById('hades-style');
 
-    if (!style || !style.parentNode) return;
+    if (!styleElement || !styleElement.parentNode) {
+      return;
+    }
 
-    style.parentNode.removeChild(style);
+    styleElement.parentNode.removeChild(styleElement);
 
-    if (this.wrapper !== null) this.wrapper.remove();
+    if (this.wrapper !== null) {
+      this.wrapper.remove();
+    }
   }
 }
 

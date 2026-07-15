@@ -1,15 +1,15 @@
-import { Vec2 } from "./declarations";
+import { type Vec2 } from './declarations.ts';
 
-class Boundaries {  
+class Boundaries {
   min: Vec2 = {
     x: 0,
     y: 0,
-  }
+  };
 
   max: Vec2 = {
     x: 0,
     y: 0,
-  }
+  };
 
   constructor(xMin: number, xMax: number, yMin: number, yMax: number) {
     this.min.x = xMin;

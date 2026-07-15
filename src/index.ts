@@ -1,19 +1,41 @@
-import Aion from '@adoratorio/aion';
-import Hermes from '@adoratorio/hermes';
-import { HermesEvent } from '@adoratorio/hermes/dist/declarations';
+import AionClass from '@adoratorio/aion';
+import HermesClass from '@adoratorio/hermes';
 import {
   DIRECTION,
-  HadesOptions,
-  Vec2,
-  Timeline,
+  type Aion,
+  type Easing,
+  type HadesOptions,
+  type HadesPlugin,
+  type HermesEvent,
+  type Timeline,
+  type Vec2,
+} from './declarations.ts';
+import Easings from './easing.ts';
+
+export { default as Boundaries } from './Boundaries.ts';
+export { DIRECTION } from './declarations.ts';
+export type {
+  Aion,
   Easing,
+  HadesOptions,
   HadesPlugin,
-} from "./declarations";
-import Easings from "./easing";
+  HermesEvent,
+  Timeline,
+  Vec2,
+} from './declarations.ts';
+export { default as EASING, type EasingFunction } from './easing.ts';
+
+// `@adoratorio/aion` and `@adoratorio/hermes` ship legacy CJS-style typings:
+// remap the default imports to the class constructor types (at runtime
+// bundlers resolve the real ESM default exports, which ARE the classes).
+const AionEngine = AionClass as unknown as (typeof AionClass)['default'];
+const HermesManager = HermesClass as unknown as (typeof HermesClass)['default'];
+
+type Hermes = InstanceType<(typeof HermesClass)['default']>;
 
 class Hades {
-  static EASING = Easings;
-  static DIRECTION = DIRECTION;
+  static readonly EASING: typeof Easings = Easings;
+  static readonly DIRECTION: typeof DIRECTION = DIRECTION;
 
   private _amount: Vec2 = { x: 0, y: 0 };
   private _temp: Vec2 = { x: 0, y: 0 };
@@ -21,20 +43,20 @@ class Hades {
   private options: HadesOptions;
   private engine: Aion;
   private manager: Hermes;
-  private scrollHandler: Function;
+  private scrollHandler: (event: HermesEvent) => void;
   private frameHandler: (delta: number, frameId: number) => void;
   private timeline: Timeline;
   private prevDirection: Vec2 = { x: Hades.DIRECTION.INITIAL, y: Hades.DIRECTION.INITIAL };
   private prevAmount: Vec2 = { x: 0, y: 0 };
-  private automaticScrolling: boolean = false;
-  private imediateScrolling: boolean = false;
-  private aionId: string = `hades-frame-${performance.now()}`;
-  private plugins: Array<HadesPlugin> = [];
-  private internalId: number = 0;
+  private automaticScrolling = false;
+  private imediateScrolling = false;
+  private aionId = `hades-frame-${performance.now()}`;
+  private plugins: HadesPlugin[] = [];
+  private internalId = 0;
 
   public amount: Vec2 = { x: 0, y: 0 };
   public velocity: Vec2 = { x: 0, y: 0 };
-  public running: boolean = false;
+  public running = false;
 
   constructor(options: Partial<HadesOptions>) {
     const defaults: HadesOptions = {
@@ -64,21 +86,23 @@ class Hades {
       final: { x: 0, y: 0 },
       current: { x: 0, y: 0 },
     };
-    this.scrollHandler = (event: HermesEvent) => this.scroll(event);
-    this.frameHandler = (delta: number) => this.frame(delta);
+    this.scrollHandler = (event: HermesEvent): void => this.scroll(event);
+    this.frameHandler = (delta: number): void => this.frame(delta);
 
     // Atach and listen to events
-    this.manager = new Hermes({
-      mode: Hermes.MODE.VIRTUAL,
+    this.manager = new HermesManager({
+      mode: HermesManager.MODE.VIRTUAL,
       root: this.options.root,
       touchMultiplier: this.options.touchMultiplier,
       passive: false,
     });
 
     // Check and initialize Aion
-    if (this.options.autoplay) this.play();
+    if (this.options.autoplay) {
+      this.play();
+    }
     if (this.options.aion === null || typeof this.options.aion === 'undefined') {
-      this.engine = new Aion({});
+      this.engine = new AionEngine({});
     } else {
       this.engine = this.options.aion;
     }
@@ -90,7 +114,7 @@ class Hades {
   private frame(delta: number): void {
     // Call PLUGIN preFrame
     this.plugins.forEach((plugin) => plugin.preFrame && plugin.preFrame(this));
-    
+
     // Get the new final value
     this.timeline.final.x = this._amount.x;
     this.timeline.final.y = this._amount.y;
@@ -111,20 +135,21 @@ class Hades {
     time = this.options.easing.mode(time);
 
     // Use the interpolated time to calculate values
-    this.timeline.current.x = this.timeline.initial.x + (time * (this.timeline.final.x - this.timeline.initial.x));
-    this.timeline.current.y = this.timeline.initial.y + (time * (this.timeline.final.y - this.timeline.initial.y));
+    this.timeline.current.x =
+      this.timeline.initial.x + time * (this.timeline.final.x - this.timeline.initial.x);
+    this.timeline.current.y =
+      this.timeline.initial.y + time * (this.timeline.final.y - this.timeline.initial.y);
     const current: Vec2 = {
       x: this.timeline.current.x,
       y: this.timeline.current.y,
     };
     this.amount = current;
 
-    // Calculate the speed (guard delta = 0 to avoid NaN/Infinity velocity)
-    const dt = delta || 1;
+    // Calculate the speed
     this.velocity = {
-      x: (current.x - this.prevAmount.x) / dt,
-      y: (current.y - this.prevAmount.y) / dt,
-    }
+      x: (current.x - this.prevAmount.x) / delta,
+      y: (current.y - this.prevAmount.y) / delta,
+    };
 
     this.prevAmount = this.amount;
 
@@ -133,11 +158,25 @@ class Hades {
     this.velocity.y = parseFloat(this.velocity.y.toFixed(this.options.precision));
 
     // Check the scroll direction and reset the timeline if it's not automated by scrollTo
-    const currentXDirection = this.velocity.x === 0 ? (Hades.DIRECTION.INITIAL) : (this.velocity.x > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP);
-    const currentYDirection = this.velocity.y === 0 ? (Hades.DIRECTION.INITIAL) : (this.velocity.y > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP);
+    const currentXDirection =
+      this.velocity.x === 0
+        ? Hades.DIRECTION.INITIAL
+        : this.velocity.x > 0
+          ? Hades.DIRECTION.DOWN
+          : Hades.DIRECTION.UP;
+    const currentYDirection =
+      this.velocity.y === 0
+        ? Hades.DIRECTION.INITIAL
+        : this.velocity.y > 0
+          ? Hades.DIRECTION.DOWN
+          : Hades.DIRECTION.UP;
     if (!this.options.smoothDirectionChange && !this.automaticScrolling) {
-      if (currentXDirection !== this.prevDirection.x) this._amount.x = this.amount.x;
-      if (currentYDirection !== this.prevDirection.y) this._amount.y = this.amount.y;
+      if (currentXDirection !== this.prevDirection.x) {
+        this._amount.x = this.amount.x;
+      }
+      if (currentYDirection !== this.prevDirection.y) {
+        this._amount.y = this.amount.y;
+      }
     }
     this.prevDirection.x = currentXDirection;
     this.prevDirection.y = currentYDirection;
@@ -151,14 +190,26 @@ class Hades {
 
   private scroll(event: HermesEvent): void {
     // Call PLUGIN wheel, can return true to prevent proceeding
-    let prevent: boolean = false;
-    this.plugins.forEach((plugin) => { if (plugin.wheel) prevent = plugin.wheel(this, event) });
-    if (prevent) return;
+    let prevent = false;
+    this.plugins.forEach((plugin) => {
+      if (plugin.wheel) {
+        prevent = plugin.wheel(this, event);
+      }
+    });
+    if (prevent) {
+      return;
+    }
 
     // Return if is stopped
-    if (!this.running) return;
-    if (Math.abs(event.delta.x) < this.options.threshold.x) event.delta.x = 0;
-    if (Math.abs(event.delta.y) < this.options.threshold.y) event.delta.y = 0;
+    if (!this.running) {
+      return;
+    }
+    if (Math.abs(event.delta.x) < this.options.threshold.x) {
+      event.delta.x = 0;
+    }
+    if (Math.abs(event.delta.y) < this.options.threshold.y) {
+      event.delta.y = 0;
+    }
 
     // Reset from the scrollTo if needed
     if (this.automaticScrolling) {
@@ -171,13 +222,13 @@ class Hades {
     this.plugins.forEach((plugin) => plugin.preScroll && plugin.preScroll(this, event));
 
     // Multiply the scroll by the options multiplier
-    event.delta.x = event.delta.x * this.options.globalMultiplier;
-    event.delta.y = event.delta.y * this.options.globalMultiplier;
+    event.delta.x *= this.options.globalMultiplier;
+    event.delta.y *= this.options.globalMultiplier;
 
     // Temporary sum amount
     this._temp.x = this._amount.x + (!this.options.invert ? event.delta.x : event.delta.y);
     this._temp.y = this._amount.y + (!this.options.invert ? event.delta.y : event.delta.x);
-    
+
     // Call PLUGIN scroll
     this.plugins.forEach((plugin) => plugin.scroll && plugin.scroll(this, event));
 
@@ -186,7 +237,7 @@ class Hades {
     this._amount.y = this._temp.y;
   }
 
-  public scrollTo(position: Partial<Vec2>, duration: number, prevent: boolean = false) {
+  public scrollTo(position: Partial<Vec2>, duration: number, prevent = false): void {
     if (duration > 0) {
       this.automaticScrolling = true;
       this.timeline.duration = duration;
@@ -200,17 +251,23 @@ class Hades {
       this._amount.y = this.amount.y;
     }
 
-    if (typeof position.x !== 'undefined') this._amount.x = position.x;
-    if (typeof position.y !== 'undefined') this._amount.y = position.y;
+    if (typeof position.x !== 'undefined') {
+      this._amount.x = position.x;
+    }
+    if (typeof position.y !== 'undefined') {
+      this._amount.y = position.y;
+    }
 
     // Call PLUGIN scrollTo
     if (!prevent) {
-      this.plugins.forEach((plugin) => plugin.scrollTo && plugin.scrollTo(this, position, duration));
+      this.plugins.forEach(
+        (plugin) => plugin.scrollTo && plugin.scrollTo(this, position, duration),
+      );
     }
   }
 
   public registerPlugin(plugin: HadesPlugin, id?: string): string {
-    let i = null;
+    let i: string;
     if (typeof id === 'undefined') {
       i = `hades-plugin-${this.internalId}`;
       this.internalId += 1;
@@ -223,15 +280,19 @@ class Hades {
 
   public unregisterPlugin(id: string): boolean {
     const foundIndex = this.plugins.findIndex((p) => p.id === id);
-    if (foundIndex === -1) return false;
+    if (foundIndex === -1) {
+      return false;
+    }
     const found = this.plugins[foundIndex];
-    if (typeof found?.destroy === 'function') found.destroy();
+    if (found && typeof found.destroy === 'function') {
+      found.destroy();
+    }
     this.plugins.splice(foundIndex, 1);
     return true;
   }
 
-  public registerPlugins(plugins: Array<HadesPlugin>, ids: Array<string>): Array<string> {
-    const is: Array<string> = [];
+  public registerPlugins(plugins: HadesPlugin[], ids: string[]): string[] {
+    const is: string[] = [];
     plugins.forEach((plugin, index) => {
       is.push(this.registerPlugin(plugin, ids[index]));
     });
@@ -240,13 +301,13 @@ class Hades {
   }
 
   public getPlugin(name: string): HadesPlugin | undefined {
-    return this.plugins.find(plugin => plugin.name === name);
+    return this.plugins.find((plugin) => plugin.name === name);
   }
 
   public getRenderer(): HadesPlugin | undefined {
     // Try to retrive the first valid render plugin
-    const valid = ['VirtualRender', 'LenisRender', 'NativeRender'];
-    return this.plugins.find((plugin => valid.includes(plugin.name)));
+    const valid = new Set(['VirtualRender', 'LenisRender', 'NativeRender']);
+    return this.plugins.find((plugin) => valid.has(plugin.name));
   }
 
   public play(): void {
@@ -268,35 +329,35 @@ class Hades {
     this.manager.destroy();
     this.engine.remove(this.aionId);
 
-    // @ts-expect-error
+    // @ts-expect-error -- intentionally release the manager reference on teardown
     delete this.manager;
-    // @ts-expect-error
+    // @ts-expect-error -- intentionally release the engine reference on teardown
     delete this.engine;
   }
 
   // Common getter for retriving props
 
-  public get direction() {
+  public get direction(): Vec2 {
     return this.prevDirection;
   }
 
-  public get root() {
+  public get root(): HTMLElement | Window {
     return this.options.root;
   }
 
-  public get internalAmount() {
+  public get internalAmount(): Vec2 {
     return this._amount;
   }
 
-  public get internalTemp() {
+  public get internalTemp(): Vec2 {
     return this._temp;
   }
 
-  public get still() {
+  public get still(): boolean {
     return this.direction.y === DIRECTION.INITIAL && this.direction.x === DIRECTION.INITIAL;
   }
 
-  public get easing() {
+  public get easing(): Easing {
     return this.options.easing;
   }
 
@@ -328,8 +389,10 @@ class Hades {
     this._temp.y = values.y;
   }
 
-  private register(plugin: HadesPlugin, id: string) {
-    if (typeof plugin.register === 'function') plugin.register(this);
+  private register(plugin: HadesPlugin, id: string): void {
+    if (typeof plugin.register === 'function') {
+      plugin.register(this);
+    }
     plugin.id = id;
     this.plugins.push(plugin);
   }

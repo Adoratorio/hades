@@ -1,15 +1,15 @@
-import Hades from "../..";
-import Boundaries from "../../Boundaries";
-import { HadesPlugin } from "../../declarations";
-import { VirtualRenderOptions } from "./declarations";
+import Boundaries from '../../Boundaries.ts';
+import { type HadesPlugin } from '../../declarations.ts';
+import type Hades from '../../index.ts';
+import { type VirtualRenderOptions } from './declarations.ts';
 
 class VirtualRender implements HadesPlugin {
   private context: Hades | null = null;
   private options: VirtualRenderOptions;
-  private lastFrame: number = 0;
-  private readonly REFLOW_THROTTLE = 100;
+  private lastFrame = 0;
+  private readonly REFLOW_THROTTLE: number = 100;
 
-  public name: string = 'VirtualRender';
+  public name = 'VirtualRender';
 
   constructor(options: Partial<VirtualRenderOptions>) {
     const defaults: VirtualRenderOptions = {
@@ -25,6 +25,7 @@ class VirtualRender implements HadesPlugin {
     this.options = { ...defaults, ...options };
 
     if (typeof this.options.scrollNode === 'undefined') {
+      // Headless mode: no node to transform, boundaries are external
       this.options.infiniteScroll = true;
       this.options.autoBoundaries = false;
       this.options.renderScroll = false;
@@ -38,8 +39,7 @@ class VirtualRender implements HadesPlugin {
     this.context = context;
   }
 
-  // @ts-ignore
-  public preFrame(context: Hades): void {
+  public preFrame(_context: Hades): void {
     // If boundires are autosetted use the container dimensions
     if (this.options.autoBoundaries) {
       const now = performance.now();
@@ -63,7 +63,7 @@ class VirtualRender implements HadesPlugin {
     const { precision } = this.options;
     const px = parseFloat((this.options.lockX ? 0 : context.amount.x * -1).toFixed(precision));
     const py = parseFloat((this.options.lockY ? 0 : context.amount.y * -1).toFixed(precision));
-    
+
     // Use transform3d for hardware acceleration
     if (this.options.renderScroll) {
       this.options.scrollNode.style.transform = `translate3d(${px}px,${py}px,0)`;
@@ -74,9 +74,15 @@ class VirtualRender implements HadesPlugin {
     // Clamp the external temp  to be inside the boundaries if not infinite scrolling
     if (!this.options.infiniteScroll) {
       context.internalTemp = {
-        x: Math.min(Math.max(context.internalTemp.x, this.options.boundaries.min.x), this.options.boundaries.max.x),
-        y: Math.min(Math.max(context.internalTemp.y, this.options.boundaries.min.y), this.options.boundaries.max.y),
-      }
+        x: Math.min(
+          Math.max(context.internalTemp.x, this.options.boundaries.min.x),
+          this.options.boundaries.max.x,
+        ),
+        y: Math.min(
+          Math.max(context.internalTemp.y, this.options.boundaries.min.y),
+          this.options.boundaries.max.y,
+        ),
+      };
     }
   }
 
@@ -90,7 +96,7 @@ class VirtualRender implements HadesPlugin {
 
   // Common getters and setters
 
-  public get boundaries() {
+  public get boundaries(): Boundaries {
     return this.options.boundaries;
   }
 

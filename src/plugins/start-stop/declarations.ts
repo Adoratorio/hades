@@ -1,10 +1,12 @@
+import type StartStop from './index.ts';
+
 export interface StartStopOptions {
-  scrollNode: HTMLElement | Window,
-  emitGlobal: boolean,
+  scrollNode: HTMLElement | Window;
+  emitGlobal: boolean;
   callbacks: {
-    start: Function,
-    stop: Function,
-  },
-  precision: number,
-  mobileDelay: number,
+    start: (instance: StartStop) => void;
+    stop: (instance: StartStop) => void;
+  };
+  precision: number;
+  mobileDelay: number;
 }

@@ -1,19 +1,17 @@
-import Hades from "../..";
-import { HadesPlugin, Vec2 } from "../../declarations";
-import { StartStopOptions } from "./declarations";
+import { type HadesPlugin, type Vec2 } from '../../declarations.ts';
+import type Hades from '../../index.ts';
+import { type StartStopOptions } from './declarations.ts';
 
 class StartStop implements HadesPlugin {
-  private _still: boolean = false;
+  private _still = false;
   private _prev: Vec2 = { x: 0, y: 0 };
-  private _prevTs: number = 0;
+  private _prevTs = 0;
 
-  // @ts-ignore context is not used in this plugin
-  private context: Hades | null = null;
   private options: StartStopOptions;
-  private startNeedEmission: boolean = true;
-  private stopNeedEmission: boolean = false;
+  private startNeedEmission = true;
+  private stopNeedEmission = false;
 
-  public name: string = 'StartStop';
+  public name = 'StartStop';
 
   constructor(options: Partial<StartStopOptions>) {
     const defaults: StartStopOptions = {
@@ -25,13 +23,13 @@ class StartStop implements HadesPlugin {
       },
       precision: 2,
       mobileDelay: 500,
-    }
+    };
 
     this.options = { ...defaults, ...options };
   }
 
-  public register(context: Hades): void {
-    this.context = context;
+  public register(_context: Hades): void {
+    // The context is intentionally not stored: this plugin only reads from the render hook
   }
 
   public render(context: Hades): void {
@@ -43,21 +41,21 @@ class StartStop implements HadesPlugin {
     } else {
       const ts = Date.now();
       const delta = ts - this._prevTs;
-  
+
       if (!window.matchMedia('(pointer: fine)').matches) {
-        const propX = this.options.scrollNode === window ? 'scrollX' : 'scrollLeft';
-        const propY = this.options.scrollNode === window ? 'scrollY' : 'scrollTop';
-        const vX = (this.options.scrollNode as any)[propX] - this._prev.x;
-        const vY = (this.options.scrollNode as any)[propY] - this._prev.y;
-      
+        const isWindow = this.options.scrollNode === window;
+        const node = this.options.scrollNode as HTMLElement;
+        const vX = (isWindow ? window.scrollX : node.scrollLeft) - this._prev.x;
+        const vY = (isWindow ? window.scrollY : node.scrollTop) - this._prev.y;
+
         if (delta > this.options.mobileDelay) {
           this._prevTs = ts;
           this.check(vX, vY);
         }
-      
+
         this._prev = {
-          x: (this.options.scrollNode as any)[propX],
-          y: (this.options.scrollNode as any)[propY],
+          x: isWindow ? window.scrollX : node.scrollLeft,
+          y: isWindow ? window.scrollY : node.scrollTop,
         };
       }
     }
@@ -91,7 +89,7 @@ class StartStop implements HadesPlugin {
     }
   }
 
-  public get still() {
+  public get still(): boolean {
     return this._still;
   }
 }

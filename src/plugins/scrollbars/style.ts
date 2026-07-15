@@ -1,7 +1,8 @@
 const TRACK_BG = 'rgba(222, 222, 222, .75)';
 const THUMB_BG = 'rgba(0, 0, 0, .5)';
 
-const style = `
+// oxlint-disable-next-line typescript/no-inferrable-types -- required by isolatedDeclarations (template literal with substitutions)
+const style: string = `
 .scrollbar__wrapper {
   position: fixed;
   top: 0;

@@ -1,18 +1,18 @@
 {
   "compilerOptions": {
     // === Language & Environment ===
-    "target": "ES2022",
-    "lib": ["ES2023", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "target": "ES2023",
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
 
-    // === Module System ===
-    "allowSyntheticDefaultImports": false,
-    "forceConsistentCasingInFileNames": true,
+    // === Native ESM + .ts source extensions ===
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "verbatimModuleSyntax": true,
     "isolatedModules": true,
-    "verbatimModuleSyntax": false,
-    "allowImportingTsExtensions": false,
     "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
 
     // === Emit ===
     "declaration": true,
@@ -21,58 +21,40 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "removeComments": true,
-    "importHelpers": true,
-    "inlineSourceMap": false,
-    "inlineSources": false,
+    "stripInternal": true,
 
-    // === JavaScript Support ===
-    "allowJs": false,
-    "checkJs": false,
-
-    // === Type Checking (Strict Mode) ===
+    // === Strict type checking ===
     "strict": true,
     "exactOptionalPropertyTypes": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
-    "noPropertyAccessFromIndexSignature": false,
     "noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    "noUncheckedSideEffectImports": true,
     "useUnknownInCatchVariables": true,
 
-    // === Modules ===
-    "baseUrl": "./",
+    // === TypeScript 7 / native compiler ready ===
+    "erasableSyntaxOnly": true,
+    "isolatedDeclarations": true,
+
+    // === Path aliases ===
     "paths": {
-      "@/*": ["src/*"],
-      "@/types": ["src/declarations.ts"]
+      "@/*": ["./src/*"],
+      "@/types": ["./src/declarations.ts"]
     },
 
-    // === Emit Declarations ===
-    "stripInternal": true,
-
-    // === Advanced ===
+    // === Performance ===
     "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
 
-    // === Bundler-specific ===
-    "allowArbitraryExtensions": false,
-
-    // === Projects ===
-    "composite": false,
-    "disableReferencedProjectLoad": true,
-
-    // === Output Formatting ===
+    // === Output formatting ===
     "noErrorTruncation": true,
     "preserveWatchOutput": true,
-    "pretty": true,
-
-    // === Completeness ===
-    "skipDefaultLibCheck": true,
+    "pretty": true
   },
-  "include": [
-    "src/**/*",
-    "types/**/*"
-  ],
+  "include": ["src/**/*"],
   "exclude": [
     "node_modules",
     "dist",
@@ -83,8 +65,6 @@
     "**/__tests__/**",
     "**/__mocks__/**",
     "examples/**/*",
-    "docs/**/*",
-    "*.config.js",
-    "*.config.ts"
-  ],
+    "docs/**/*"
+  ]
 }

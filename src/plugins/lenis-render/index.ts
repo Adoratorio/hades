@@ -1,18 +1,17 @@
-import { HermesEvent } from "@adoratorio/hermes/dist/declarations";
-import Hades from "../..";
-import { HadesPlugin } from "../../declarations";
-import { LenisRenderOptions } from "./declarations";
-import { isScrollableElement } from "../../utils";
-import Boundaries from "../../Boundaries";
+import Boundaries from '../../Boundaries.ts';
+import { type HadesPlugin, type HermesEvent } from '../../declarations.ts';
+import type Hades from '../../index.ts';
+import { isScrollableElement } from '../../utils.ts';
+import { type LenisRenderOptions } from './declarations.ts';
 
 class LenisRender implements HadesPlugin {
   private context: Hades | null = null;
   private options: LenisRenderOptions;
-  private nativeScrollHandler: EventListenerOrEventListenerObject;
-  private isValidEvent: boolean = false;
+  private nativeScrollHandler: (event: Event) => void;
+  private isValidEvent = false;
   private interval: number | null = null;
 
-  public name: string = 'LenisRender';
+  public name = 'LenisRender';
 
   constructor(options: Partial<LenisRenderOptions>) {
     const defaults: LenisRenderOptions = {
@@ -20,7 +19,7 @@ class LenisRender implements HadesPlugin {
       renderScroll: true,
     };
     this.options = { ...defaults, ...options };
-    this.nativeScrollHandler = (e: Event) => this.nativeScroll(e);
+    this.nativeScrollHandler = (e: Event): void => this.nativeScroll(e);
 
     if (typeof this.options.scrollNode === 'undefined') {
       throw new Error('Invalid Scroll Node for Lenis Renderer');
@@ -33,16 +32,18 @@ class LenisRender implements HadesPlugin {
     this.context = context;
   }
 
-  // @ts-ignore
-  public wheel(context: Hades, event: HermesEvent): boolean {
+  public wheel(_context: Hades, event: HermesEvent): boolean {
     // If the node of the event is not the direct child of scrollNode and is a scrollable node
     // need to prevent the lenis scroll to trigger
     if (
       (event.originalEvent.target as HTMLElement).parentNode !== this.options.scrollNode &&
-      isScrollableElement((event.originalEvent.target as HTMLElement))
-    ) return true;
+      isScrollableElement(event.originalEvent.target as HTMLElement)
+    ) {
+      return true;
+    }
 
-    if (event.type === 'wheel') {
+    // The published hermes typings still declare `type` as an enum, compare as string
+    if ((event.type as string) === 'wheel') {
       event.originalEvent.preventDefault();
       this.isValidEvent = true;
     } else {
@@ -58,11 +59,10 @@ class LenisRender implements HadesPlugin {
     }
   }
 
-  // @ts-ignore
-  public scroll(context: Hades, event: HermesEvent): void {
+  public scroll(context: Hades, _event: HermesEvent): void {
     // Clamp the external temp  to be inside the boundaries if not infinite scrolling
     const isWindow = this.options.scrollNode === window;
-    const node = (isWindow ? document.body : this.options.scrollNode as HTMLElement);
+    const node = isWindow ? document.body : (this.options.scrollNode as HTMLElement);
     const bound = {
       x: node.scrollWidth - (isWindow ? window.innerWidth : node.clientWidth),
       y: node.scrollHeight - (isWindow ? window.innerHeight : node.clientHeight),
@@ -70,36 +70,42 @@ class LenisRender implements HadesPlugin {
 
     context.internalTemp = {
       x: Math.min(Math.max(context.internalTemp.x, 0), bound.x),
-      y: Math.min(Math.max(context.internalTemp.y,0), bound.y),
-    }
+      y: Math.min(Math.max(context.internalTemp.y, 0), bound.y),
+    };
   }
 
-  // @ts-ignore
-  private nativeScroll(event: Event): void {
+  private nativeScroll(_event: Event): void {
     if (this.context && !this.isValidEvent) {
-      const propX = this.options.scrollNode === window ? 'scrollX' : 'scrollLeft';
-      const propY = this.options.scrollNode === window ? 'scrollY' : 'scrollTop';
-      this.context.scrollTo({
-        x: (this.options.scrollNode as any)[propX],
-        y: (this.options.scrollNode as any)[propY],
-      }, 0, true);
+      const isWindow = this.options.scrollNode === window;
+      this.context.scrollTo(
+        {
+          x: isWindow ? window.scrollX : (this.options.scrollNode as HTMLElement).scrollLeft,
+          y: isWindow ? window.scrollY : (this.options.scrollNode as HTMLElement).scrollTop,
+        },
+        0,
+        true,
+      );
     }
 
     // Temporary (?) fix for native scrollbar click
     if (window) {
-      if (this.interval) window.clearTimeout(this.interval);
-      this.interval = window.setTimeout(() => { this.isValidEvent = false }, 100);
+      if (this.interval) {
+        window.clearTimeout(this.interval);
+      }
+      this.interval = window.setTimeout(() => {
+        this.isValidEvent = false;
+      }, 100);
     }
   }
 
-  // @ts-ignore
-  public scrollTo(context: Hades) {
+  public scrollTo(): void {
     this.isValidEvent = true; // Force the scroll render on mobile
   }
 
-  // @ts-ignore
-  public destroy(context: Hades) {
-    if (this.interval) window.clearTimeout(this.interval);
+  public destroy(): void {
+    if (this.interval) {
+      window.clearTimeout(this.interval);
+    }
     this.options.scrollNode.removeEventListener('scroll', this.nativeScrollHandler);
   }
 
@@ -111,7 +117,7 @@ class LenisRender implements HadesPlugin {
     this.options.renderScroll = false;
   }
 
-  public swapScrollNode(node: HTMLElement | Window) {
+  public swapScrollNode(node: HTMLElement | Window): void {
     node.addEventListener('scroll', this.nativeScrollHandler);
     this.options.scrollNode.removeEventListener('scroll', this.nativeScrollHandler);
     this.options.scrollNode = node;
@@ -120,15 +126,20 @@ class LenisRender implements HadesPlugin {
   public get boundaries(): Boundaries {
     if (this.options.scrollNode instanceof Window) {
       return new Boundaries(
-        0, document.body.scrollWidth - document.body.clientWidth,
-        0, document.body.scrollHeight - document.body.clientHeight,
-      );
-    } else {
-      return new Boundaries(
-        0, (this.options.scrollNode as HTMLElement).scrollWidth - (this.options.scrollNode as HTMLElement).clientWidth,
-        0, (this.options.scrollNode as HTMLElement).scrollHeight - (this.options.scrollNode as HTMLElement).clientHeight,
+        0,
+        document.body.scrollWidth - document.body.clientWidth,
+        0,
+        document.body.scrollHeight - document.body.clientHeight,
       );
     }
+    return new Boundaries(
+      0,
+      (this.options.scrollNode as HTMLElement).scrollWidth -
+        (this.options.scrollNode as HTMLElement).clientWidth,
+      0,
+      (this.options.scrollNode as HTMLElement).scrollHeight -
+        (this.options.scrollNode as HTMLElement).clientHeight,
+    );
   }
 }
 
