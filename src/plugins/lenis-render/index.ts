@@ -87,7 +87,7 @@ class LenisRender implements HadesPlugin {
 
     // Temporary (?) fix for native scrollbar click
     if (window) {
-      if (this.interval) window.clearInterval(this.interval);
+      if (this.interval) window.clearTimeout(this.interval);
       this.interval = window.setTimeout(() => { this.isValidEvent = false }, 100);
     }
   }
@@ -99,6 +99,7 @@ class LenisRender implements HadesPlugin {
 
   // @ts-ignore
   public destroy(context: Hades) {
+    if (this.interval) window.clearTimeout(this.interval);
     this.options.scrollNode.removeEventListener('scroll', this.nativeScrollHandler);
   }
 
@@ -124,7 +125,7 @@ class LenisRender implements HadesPlugin {
       );
     } else {
       return new Boundaries(
-        0, (this.options.scrollNode as HTMLElement).scrollLeft - (this.options.scrollNode as HTMLElement).clientWidth,
+        0, (this.options.scrollNode as HTMLElement).scrollWidth - (this.options.scrollNode as HTMLElement).clientWidth,
         0, (this.options.scrollNode as HTMLElement).scrollHeight - (this.options.scrollNode as HTMLElement).clientHeight,
       );
     }
