@@ -27,10 +27,11 @@ class VirtualRender implements HadesPlugin {
     if (typeof this.options.scrollNode === 'undefined') {
       this.options.infiniteScroll = true;
       this.options.autoBoundaries = false;
+      this.options.renderScroll = false;
+    } else {
+      this.options.scrollNode.style.webkitBackfaceVisibility = 'hidden';
+      this.options.scrollNode.style.backfaceVisibility = 'hidden';
     }
-
-    this.options.scrollNode.style.webkitBackfaceVisibility = 'hidden';
-    this.options.scrollNode.style.backfaceVisibility = 'hidden';
   }
 
   public register(context: Hades): void {
