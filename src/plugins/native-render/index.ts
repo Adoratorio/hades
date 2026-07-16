@@ -3,11 +3,11 @@ import type Hades from '../../index.ts';
 import { type NativeRenderOptions } from './types.ts';
 
 class NativeRender implements HadesPlugin {
-  private _native: Vec2 = { x: 0, y: 0 };
+  #native: Vec2 = { x: 0, y: 0 };
 
-  private context: Hades | null = null;
-  private options: NativeRenderOptions;
-  private nativeScrollHandler: (event: Event) => void;
+  #context: Hades | null = null;
+  #options: NativeRenderOptions;
+  #nativeScrollHandler: (event: Event) => void;
 
   public name = 'NativeRender';
 
@@ -16,22 +16,22 @@ class NativeRender implements HadesPlugin {
       scrollNode: window,
     };
 
-    this.options = { ...defaults, ...options };
-    this.nativeScrollHandler = (e: Event): void => this.nativeScroll(e);
+    this.#options = { ...defaults, ...options };
+    this.#nativeScrollHandler = (e: Event): void => this.#nativeScroll(e);
 
-    this.options.scrollNode.addEventListener('scroll', this.nativeScrollHandler);
+    this.#options.scrollNode.addEventListener('scroll', this.#nativeScrollHandler);
   }
 
   public register(context: Hades): void {
-    this.context = context;
+    this.#context = context;
   }
 
   public render(context: Hades): void {
     // Use the render cycle to write hades internal amount
     context.scrollTo(
       {
-        x: this._native.x,
-        y: this._native.y,
+        x: this.#native.x,
+        y: this.#native.y,
       },
       0,
       true,
@@ -40,27 +40,27 @@ class NativeRender implements HadesPlugin {
 
   public scrollTo(_context: Hades, position: Partial<Vec2>): void {
     // Keep the raw (possibly undefined) values as per original runtime behaviour
-    this.options.scrollNode.scrollTo(position.x as number, position.y as number);
+    this.#options.scrollNode.scrollTo(position.x as number, position.y as number);
   }
 
-  private nativeScroll(_event: Event): void {
-    if (this.context) {
-      const isWindow = this.options.scrollNode === window;
-      this._native = {
-        x: isWindow ? window.scrollX : (this.options.scrollNode as HTMLElement).scrollLeft,
-        y: isWindow ? window.scrollY : (this.options.scrollNode as HTMLElement).scrollTop,
+  #nativeScroll(_event: Event): void {
+    if (this.#context) {
+      const isWindow = this.#options.scrollNode === window;
+      this.#native = {
+        x: isWindow ? window.scrollX : (this.#options.scrollNode as HTMLElement).scrollLeft,
+        y: isWindow ? window.scrollY : (this.#options.scrollNode as HTMLElement).scrollTop,
       };
     }
   }
 
   public destroy(): void {
-    this.options.scrollNode.removeEventListener('scroll', this.nativeScrollHandler);
+    this.#options.scrollNode.removeEventListener('scroll', this.#nativeScrollHandler);
   }
 
   // Common getters for some internal props
 
   public get native(): Vec2 {
-    return this._native;
+    return this.#native;
   }
 }
 
