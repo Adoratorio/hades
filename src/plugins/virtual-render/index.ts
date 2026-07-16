@@ -8,6 +8,10 @@ class VirtualRender implements HadesPlugin {
   #options: VirtualRenderOptions;
   #lastFrame = 0;
   readonly #REFLOW_THROTTLE = 100;
+  #resizeObserver: ResizeObserver | null = null;
+  #onResize = (): void => {
+    this.#computeBoundaries();
+  };
 
   public name = 'VirtualRender';
 
@@ -32,6 +36,16 @@ class VirtualRender implements HadesPlugin {
     } else {
       this.#options.scrollNode.style.webkitBackfaceVisibility = 'hidden';
       this.#options.scrollNode.style.backfaceVisibility = 'hidden';
+
+      // Prefer a ResizeObserver over per-frame getBoundingClientRect polling:
+      // boundaries are recomputed only when the container or the viewport
+      // actually resizes, keeping layout reads out of the frame loop.
+      if (this.#options.autoBoundaries && typeof ResizeObserver !== 'undefined') {
+        this.#resizeObserver = new ResizeObserver(this.#onResize);
+        this.#resizeObserver.observe(this.#options.scrollNode);
+        window.addEventListener('resize', this.#onResize);
+        this.#computeBoundaries();
+      }
     }
   }
 
@@ -40,22 +54,26 @@ class VirtualRender implements HadesPlugin {
   }
 
   public preFrame(_context: Hades): void {
-    // If boundires are autosetted use the container dimensions
-    if (this.#options.autoBoundaries) {
+    // Fallback polling, used only when ResizeObserver is unavailable
+    if (this.#options.autoBoundaries && this.#resizeObserver === null) {
       const now = performance.now();
 
       // Only recalculate boundaries every REFLOW_THROTTLE ms
       if (now - this.#lastFrame > this.#REFLOW_THROTTLE) {
-        const containerRect = this.#options.scrollNode.getBoundingClientRect();
-        this.#options.boundaries = new Boundaries(
-          0,
-          containerRect.width - window.innerWidth,
-          0,
-          containerRect.height - window.innerHeight,
-        );
+        this.#computeBoundaries();
         this.#lastFrame = now;
       }
     }
+  }
+
+  #computeBoundaries(): void {
+    const containerRect = this.#options.scrollNode.getBoundingClientRect();
+    this.#options.boundaries = new Boundaries(
+      0,
+      containerRect.width - window.innerWidth,
+      0,
+      containerRect.height - window.innerHeight,
+    );
   }
 
   public render(context: Hades): void {
@@ -92,6 +110,14 @@ class VirtualRender implements HadesPlugin {
 
   public stopRender(): void {
     this.#options.renderScroll = false;
+  }
+
+  public destroy(): void {
+    if (this.#resizeObserver !== null) {
+      this.#resizeObserver.disconnect();
+      this.#resizeObserver = null;
+      window.removeEventListener('resize', this.#onResize);
+    }
   }
 
   // Common getters and setters

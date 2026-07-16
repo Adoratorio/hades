@@ -11,6 +11,14 @@ class StartStop implements HadesPlugin {
   #startNeedEmission = true;
   #stopNeedEmission = false;
 
+  // Cache the pointer-type media query and update it on change instead of
+  // calling window.matchMedia() on every render frame.
+  #pointerFineMQL: MediaQueryList | null = null;
+  #pointerFine = true;
+  #onPointerChange = (event: MediaQueryListEvent): void => {
+    this.#pointerFine = event.matches;
+  };
+
   public name = 'StartStop';
 
   constructor(options: Partial<StartStopOptions>) {
@@ -26,6 +34,12 @@ class StartStop implements HadesPlugin {
     };
 
     this.#options = { ...defaults, ...options };
+
+    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+      this.#pointerFineMQL = window.matchMedia('(pointer: fine)');
+      this.#pointerFine = this.#pointerFineMQL.matches;
+      this.#pointerFineMQL.addEventListener('change', this.#onPointerChange);
+    }
   }
 
   public register(_context: Hades): void {
@@ -33,7 +47,7 @@ class StartStop implements HadesPlugin {
   }
 
   public render(context: Hades): void {
-    if (window.matchMedia('(pointer: fine)').matches) {
+    if (this.#pointerFine) {
       const vX = parseFloat(context.velocity.x.toFixed(this.#options.precision));
       const vY = parseFloat(context.velocity.y.toFixed(this.#options.precision));
 
@@ -84,6 +98,13 @@ class StartStop implements HadesPlugin {
       const eventInit: CustomEventInit = {};
       const customEvent: CustomEvent = new CustomEvent(`hades-${type}`, eventInit);
       window.dispatchEvent(customEvent);
+    }
+  }
+
+  public destroy(): void {
+    if (this.#pointerFineMQL !== null) {
+      this.#pointerFineMQL.removeEventListener('change', this.#onPointerChange);
+      this.#pointerFineMQL = null;
     }
   }
 
