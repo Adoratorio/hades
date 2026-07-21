@@ -42,7 +42,7 @@
     "hades",
     "adoratorio"
   ],
-  "author": "Adoratorio <contact@adoratorio.com>",
+  "author": "Adoratorio Studio <contact@adoratorio.com>",
   "contributors": [
     "Andrea Gottardi <andrea@adoratorio.com>",
     "Daniele Borra <daniele@adoratorio.com>",
@@ -60,12 +60,12 @@
   "homepage": "https://github.com/Adoratorio/hades#readme",
   "packageManager": "pnpm@11.12.0",
   "dependencies": {
-    "@adoratorio/aion": "^0.4.3",
-    "@adoratorio/hermes": "^1.0.3"
+    "@adoratorio/aion": "^1.0.0",
+    "@adoratorio/hermes": "^2.0.0"
   },
   "devDependencies": {
-    "oxfmt": "^0.58.0",
-    "oxlint": "^1.73.0",
+    "oxfmt": "^0.59.0",
+    "oxlint": "^1.74.0",
     "typescript": "^7.0.2"
   }
 }

@@ -15,7 +15,7 @@
     "eslint/capitalized-comments": "off",
     "eslint/func-style": ["error", "declaration", { "allowArrowFunctions": true }],
     "eslint/id-length": "off",
-    "eslint/max-statements": ["warn", { "max": 20 }, { "ignoreTopLevelFunctions": true }],
+    "eslint/max-statements": ["warn", { "max": 30 }, { "ignoreTopLevelFunctions": true }],
     "eslint/max-params": ["warn", { "max": 5 }],
     "eslint/no-ternary": "off",
     "eslint/no-magic-numbers": "off",
