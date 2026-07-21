@@ -1,14 +1,11 @@
-import type AionModule from '@adoratorio/aion';
-import { type HermesEvent } from '@adoratorio/hermes/dist/declarations.js';
+import type AionInstance from '@adoratorio/aion';
+import { type HermesEvent } from '@adoratorio/hermes';
 import { type EasingFunction } from './easing.ts';
 import type Hades from './index.ts';
 
-export { type HermesEvent };
+export { type HermesEvent } from '@adoratorio/hermes';
 
-// `@adoratorio/aion` ships legacy CJS-style typings, so under NodeNext the
-// default import is typed as the module namespace: the instance type is
-// re-derived from its `default` member (bundlers resolve the real ESM class).
-export type Aion = InstanceType<(typeof AionModule)['default']>;
+export type Aion = AionInstance;
 
 export const DIRECTION = {
   UP: 1,

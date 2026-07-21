@@ -1,4 +1,4 @@
-export const isScrollableElement = (node: HTMLElement): boolean => {
+export function isScrollableElement(node: HTMLElement): boolean {
   const p = node.parentElement;
   if (p === null) {
     return false;
@@ -13,4 +13,4 @@ export const isScrollableElement = (node: HTMLElement): boolean => {
       style.overflowX === 'scroll' ||
       style.overflowY === 'scroll')
   );
-};
+}

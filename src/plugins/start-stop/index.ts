@@ -6,24 +6,22 @@ class StartStop implements HadesPlugin {
   #still = false;
   #prev: Vec2 = { x: 0, y: 0 };
   #prevTs = 0;
-
   #options: StartStopOptions;
   #startNeedEmission = true;
   #stopNeedEmission = false;
 
-  // Cache the pointer-type media query and update it on change instead of
-  // calling window.matchMedia() on every render frame.
   #pointerFineMQL: MediaQueryList | null = null;
   #pointerFine = true;
+
   #onPointerChange = (event: MediaQueryListEvent): void => {
     this.#pointerFine = event.matches;
   };
 
   public name = 'StartStop';
 
-  constructor(options: Partial<StartStopOptions>) {
+  constructor(options: Partial<StartStopOptions> = {}) {
     const defaults: StartStopOptions = {
-      scrollNode: window,
+      scrollNode: typeof window !== 'undefined' ? window : ({} as Window),
       emitGlobal: false,
       callbacks: {
         start: () => {},
@@ -32,7 +30,6 @@ class StartStop implements HadesPlugin {
       precision: 2,
       mobileDelay: 500,
     };
-
     this.#options = { ...defaults, ...options };
 
     if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
@@ -42,34 +39,31 @@ class StartStop implements HadesPlugin {
     }
   }
 
-  public register(_context: Hades): void {
-    // The context is intentionally not stored: this plugin only reads from the render hook
-  }
-
   public render(context: Hades): void {
     if (this.#pointerFine) {
-      const vX = parseFloat(context.velocity.x.toFixed(this.#options.precision));
-      const vY = parseFloat(context.velocity.y.toFixed(this.#options.precision));
-
+      // GC optimization
+      const factor = 10 ** this.#options.precision;
+      const vX = Math.round(context.velocity.x * factor) / factor;
+      const vY = Math.round(context.velocity.y * factor) / factor;
       this.#check(vX, vY);
     } else {
       const ts = Date.now();
       const delta = ts - this.#prevTs;
-
-      const isWindow = this.#options.scrollNode === window;
+      const isWindow = typeof window !== 'undefined' && this.#options.scrollNode === window;
       const node = this.#options.scrollNode as HTMLElement;
-      const vX = (isWindow ? window.scrollX : node.scrollLeft) - this.#prev.x;
-      const vY = (isWindow ? window.scrollY : node.scrollTop) - this.#prev.y;
+
+      const currentX = isWindow ? window.scrollX : node.scrollLeft || 0;
+      const currentY = isWindow ? window.scrollY : node.scrollTop || 0;
+
+      const vX = currentX - this.#prev.x;
+      const vY = currentY - this.#prev.y;
 
       if (delta > this.#options.mobileDelay) {
         this.#prevTs = ts;
         this.#check(vX, vY);
       }
 
-      this.#prev = {
-        x: isWindow ? window.scrollX : node.scrollLeft,
-        y: isWindow ? window.scrollY : node.scrollTop,
-      };
+      this.#prev = { x: currentX, y: currentY };
     }
   }
 
@@ -94,7 +88,7 @@ class StartStop implements HadesPlugin {
   }
 
   #emitStillChange(type: string): void {
-    if (this.#options.emitGlobal) {
+    if (this.#options.emitGlobal && typeof window !== 'undefined') {
       const eventInit: CustomEventInit = {};
       const customEvent: CustomEvent = new CustomEvent(`hades-${type}`, eventInit);
       window.dispatchEvent(customEvent);
