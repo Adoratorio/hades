@@ -58,6 +58,7 @@ class Hades {
       },
       invert: false,
       precision: 4,
+      debug: false,
     };
 
     this.#options = { ...defaults, ...options };
@@ -78,16 +79,23 @@ class Hades {
       root: this.#options.root,
       touchMultiplier: this.#options.touchMultiplier,
       passive: false,
+      debug: this.#options.debug,
     });
 
     if (this.#options.autoplay) {
       this.play();
     }
 
-    this.#engine = this.#options.aion ?? new AionEngine({});
+    this.#engine = this.#options.aion ?? new AionEngine({ debug: this.#options.debug });
 
     this.#engine.add(this.#frameHandler, this.#aionId);
     this.#engine.start();
+  }
+
+  #debugWarn(message: string): void {
+    if (this.#options.debug) {
+      console.warn(`[Hades] ${message}`);
+    }
   }
 
   #frame(delta: number): void {
@@ -228,6 +236,7 @@ class Hades {
   public unregisterPlugin(id: string): boolean {
     const foundIndex = this.#plugins.findIndex((p) => p.id === id);
     if (foundIndex === -1) {
+      this.#debugWarn(`No plugin registered with id "${id}"`);
       return false;
     }
     const found = this.#plugins[foundIndex];

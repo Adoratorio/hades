@@ -27,7 +27,7 @@ class LenisRender implements HadesPlugin {
     this.#boundHandler = (): void => this.#computeBound();
 
     if (typeof this.#options.scrollNode === 'undefined') {
-      throw new Error('Invalid Scroll Node for Lenis Renderer');
+      throw new Error('[Hades] Invalid Scroll Node for Lenis Renderer');
     }
 
     if (typeof window !== 'undefined') {

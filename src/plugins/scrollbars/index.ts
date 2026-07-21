@@ -42,7 +42,7 @@ class Scrollbars implements HadesPlugin {
   public register(context: Hades): void {
     this.#virtual = context.getPlugin('VirtualRender') as VirtualRender;
     if (!this.#virtual) {
-      throw new Error('Cannot initialize scrollbar without Virtual Render Plugin');
+      throw new Error('[Hades] Cannot initialize scrollbar without Virtual Render Plugin');
     }
     this.#context = context;
 

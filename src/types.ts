@@ -26,6 +26,7 @@ export interface HadesOptions {
   threshold: Vec2;
   invert: boolean;
   precision: number;
+  debug: boolean;
 }
 
 export interface Vec2 {

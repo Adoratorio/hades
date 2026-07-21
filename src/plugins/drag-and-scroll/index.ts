@@ -45,7 +45,7 @@ class DragAndScroll implements HadesPlugin {
       node = this.#options.proxyNode;
     }
     if (typeof node === 'undefined' || node === null) {
-      throw new Error('No context or proxyNode specified for DragAndScroll plugin');
+      throw new Error('[Hades] No context or proxyNode specified for DragAndScroll plugin');
     }
 
     this.#eventNode = node;
