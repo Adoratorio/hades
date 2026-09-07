@@ -12,8 +12,8 @@ class StartStop implements HadesPlugin {
   #prev: Vec2 = { x: 0, y: 0 };
   #prevTs = 0;
   #options: StartStopOptions;
-  #startNeedEmission = true;
-  #stopNeedEmission = false;
+  #startNeedsEmission = true;
+  #stopNeedsEmission = false;
 
   #pointerFineMQL: MediaQueryList | null = null;
   #pointerFine = true;
@@ -83,19 +83,19 @@ class StartStop implements HadesPlugin {
   #check(x: number, y: number): void {
     if (x === 0 && y === 0) {
       this.#still = true;
-      if (this.#stopNeedEmission) {
+      if (this.#stopNeedsEmission) {
         this.#options.callbacks.stop(this);
         this.#emitStillChange('stop');
-        this.#stopNeedEmission = false;
-        this.#startNeedEmission = true;
+        this.#stopNeedsEmission = false;
+        this.#startNeedsEmission = true;
       }
     } else {
       this.#still = false;
-      if (this.#startNeedEmission) {
+      if (this.#startNeedsEmission) {
         this.#options.callbacks.start(this);
         this.#emitStillChange('start');
-        this.#startNeedEmission = false;
-        this.#stopNeedEmission = true;
+        this.#startNeedsEmission = false;
+        this.#stopNeedsEmission = true;
       }
     }
   }
