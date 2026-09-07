@@ -18,6 +18,7 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
+    "inlineSources": true,
     "outDir": "./dist",
     "rootDir": "./src",
     "removeComments": true,
@@ -38,12 +39,6 @@
     // === TypeScript 7 / native compiler ready ===
     "erasableSyntaxOnly": true,
     "isolatedDeclarations": true,
-
-    // === Path aliases ===
-    "paths": {
-      "@/*": ["./src/*"],
-      "@/types": ["./src/types.ts"]
-    },
 
     // === Performance ===
     "skipLibCheck": true,

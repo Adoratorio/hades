@@ -22,18 +22,22 @@
   },
   "sideEffects": false,
   "files": [
-    "dist/**/*"
+    "dist/**/*",
+    "src/**/*",
+    "MAINTAINERS.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "rm -rf ./dist && tsc",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
     "lint": "oxlint src test",
     "lint:fix": "oxlint --fix src test",
     "format": "oxfmt src test",
     "format:check": "oxfmt --check src test",
     "test": "vitest run",
     "check": "pnpm run typecheck && pnpm run lint && pnpm run format:check",
-    "prepublishOnly": "pnpm run check && pnpm run test && pnpm run build"
+    "prepublishOnly": "pnpm run check && pnpm run test && pnpm run build",
+    "test:package": "node scripts/check-package.mjs"
   },
   "keywords": [
     "scroll",

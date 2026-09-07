@@ -115,3 +115,25 @@ Hades needs `window` and `document`; instantiating it outside of a browser envir
 ## TypeScript Support
 
 Fully typed. Exported interfaces include `HadesOptions`, `HadesPlugin`, `Vec2`, and `Boundaries`.
+
+## Maintenance and compatibility
+
+See [MAINTAINERS.md](MAINTAINERS.md), [CONTRIBUTING.md](CONTRIBUTING.md) and
+[CHANGELOG.md](CHANGELOG.md). Historical contributor credits are retained.
+The CI runtime is Node 24; DOM instances are client-only. Imports are SSR-safe.
+The runtime expects native ES2023 support; TypeScript does not provide browser
+polyfills. DOM functionality uses requestAnimationFrame, Pointer/Touch Events
+and observers where applicable. Test the target browser matrix before release.
+
+Nested constructor settings may be partial. An easing duration of zero means
+immediate movement; negative or non-finite easing durations are rejected.
+`respectReducedMotion: true` opts in to immediate movement while the system
+requests reduced motion. The default remains the existing easing behavior,
+and plugin frame hooks continue running even while the instance is still.
+
+Renderer constructors require a DOM (or an explicit valid node); create them
+after mount. `LenisRender.recalculate()` refreshes cached bounds for layout
+changes not reported by ResizeObserver or DOM content mutations. Inner native
+scrollers consume input while they have room in the requested direction;
+input can reach the outer scroller at their boundary. Ctrl+wheel is left to
+browser zoom. Built-in scrollbars support arrows, PageUp/PageDown and Home/End.
