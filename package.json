@@ -27,10 +27,10 @@
   "scripts": {
     "build": "rm -rf ./dist && tsc",
     "typecheck": "tsc --noEmit",
-    "lint": "oxlint src",
-    "lint:fix": "oxlint --fix src",
-    "format": "oxfmt src",
-    "format:check": "oxfmt --check src",
+    "lint": "oxlint src test",
+    "lint:fix": "oxlint --fix src test",
+    "format": "oxfmt src test",
+    "format:check": "oxfmt --check src test",
     "test": "vitest run",
     "check": "pnpm run typecheck && pnpm run lint && pnpm run format:check",
     "prepublishOnly": "pnpm run check && pnpm run test && pnpm run build"

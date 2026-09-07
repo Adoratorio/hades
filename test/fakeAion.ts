@@ -1,4 +1,4 @@
-import type { Aion } from '../src/types.ts';
+import { type Aion } from '../src/types.ts';
 
 // Minimal stand-in for the Aion engine: frames run only when `frame()` is called
 export function createFakeAion(): Aion & { frame: (delta: number) => void } {

@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import Hades, { EASING, type HermesEvent } from '../src/index.ts';
+import Hades, { DIRECTION, EASING, type HermesEvent } from '../src/index.ts';
 import { createFakeAion } from './fakeAion.ts';
 
 function wheel(deltaY: number, deltaX = 0): void {
@@ -21,7 +21,7 @@ describe('Hades frame math', () => {
     wheel(100);
     aion.frame(50);
     expect(hades.amount.y).toBe(50);
-    expect(hades.direction.y).toBe(Hades.DIRECTION.DOWN);
+    expect(hades.direction.y).toBe(DIRECTION.DOWN);
     expect(hades.still).toBe(false);
 
     // Converges within about a second instead of asymptotically forever

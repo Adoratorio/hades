@@ -1,6 +1,13 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["eslint", "typescript", "import", "unicorn", "oxc", "vue"],
+  "plugins": [
+    "eslint",
+    "typescript",
+    "import",
+    "unicorn",
+    "oxc",
+    "vue"
+  ],
   "env": {
     "browser": true
   },
@@ -13,19 +20,46 @@
   },
   "rules": {
     "eslint/capitalized-comments": "off",
-    "eslint/func-style": ["error", "declaration", { "allowArrowFunctions": true }],
+    "eslint/func-style": [
+      "error",
+      "declaration",
+      {
+        "allowArrowFunctions": true
+      }
+    ],
     "eslint/id-length": "off",
-    "eslint/max-statements": ["warn", { "max": 30 }, { "ignoreTopLevelFunctions": true }],
-    "eslint/max-params": ["warn", { "max": 5 }],
+    "eslint/max-statements": [
+      "warn",
+      {
+        "max": 30
+      },
+      {
+        "ignoreTopLevelFunctions": true
+      }
+    ],
+    "eslint/max-params": [
+      "warn",
+      {
+        "max": 5
+      }
+    ],
     "eslint/no-ternary": "off",
     "eslint/no-magic-numbers": "off",
     "eslint/sort-imports": "off",
     "eslint/sort-keys": "off",
-
-    "import/consistent-type-specifier-style": ["warn", "prefer-inline"],
+    "import/consistent-type-specifier-style": [
+      "warn",
+      "prefer-inline"
+    ],
     "import/exports-last": "off",
     "import/group-exports": "off",
-    "import/no-anonymous-default-export": ["warn", { "allowObject": true, "allowNew": true }],
+    "import/no-anonymous-default-export": [
+      "warn",
+      {
+        "allowObject": true,
+        "allowNew": true
+      }
+    ],
     "import/no-cycle": "error",
     "import/no-duplicates": "error",
     "import/no-named-as-default": "error",
@@ -33,7 +67,6 @@
     "import/no-mutable-exports": "error",
     "import/prefer-default-export": "off",
     "import/no-self-import": "error",
-
     "unicorn/filename-case": [
       "error",
       {
@@ -51,12 +84,14 @@
   },
   "overrides": [
     {
-      "files": ["*.js", "*.mjs"],
-      "rules": {}
-    },
-    {
-      "files": ["*.ts", "*.mts"],
-      "rules": {}
+      "files": [
+        "test/**/*.ts"
+      ],
+      "rules": {
+        "eslint/init-declarations": "off",
+        "eslint/max-statements": "off",
+        "eslint/max-lines-per-function": "off"
+      }
     }
   ]
 }
