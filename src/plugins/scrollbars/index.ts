@@ -64,7 +64,7 @@ class Scrollbars implements HadesPlugin {
 
     const controlled = scrollNode instanceof HTMLElement ? scrollNode : document.documentElement;
     if (!controlled.id) {
-      let id: string;
+      let id = '';
       do {
         id = `hades-scroll-content-${++controlId}`;
       } while (document.getElementById(id));
@@ -278,7 +278,7 @@ class Scrollbars implements HadesPlugin {
       [isX ? 'ArrowLeft' : 'ArrowUp']: -40,
       [isX ? 'ArrowRight' : 'ArrowDown']: 40,
     };
-    let target: number;
+    let target = current;
     if (event.key === 'Home') {
       target = isX ? min.x : min.y;
     } else if (event.key === 'End') {

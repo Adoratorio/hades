@@ -11,6 +11,7 @@ class VirtualRender implements HadesPlugin {
   readonly #REFLOW_THROTTLE = 100;
   #resizeObserver: ResizeObserver | null = null;
   #lastTransform = '';
+  #appliedTransform = '';
   #originalTransform = '';
   #originalBackface = '';
   #originalWebkitBackface = '';
@@ -100,6 +101,7 @@ class VirtualRender implements HadesPlugin {
     }
     this.#lastTransform = transform;
     this.#options.scrollNode.style.transform = transform;
+    this.#appliedTransform = this.#options.scrollNode.style.transform;
   }
 
   public scroll(context: Hades): void {
@@ -133,7 +135,7 @@ class VirtualRender implements HadesPlugin {
   public destroy(): void {
     const style = this.#options.scrollNode?.style;
     if (style) {
-      if (style.transform === this.#lastTransform) {
+      if (style.transform === this.#appliedTransform) {
         style.transform = this.#originalTransform;
       }
       if (style.backfaceVisibility === 'hidden') {

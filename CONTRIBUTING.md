@@ -26,3 +26,13 @@ from a different current maintainer. Agree on versions, tags, push and npm
 publication separately; no local check publishes or pushes anything.
 For dependent packages, publish and verify their required dependency versions
 first. Prefer npm trusted publishing when the release workflow is configured.
+
+## Real browser smoke tests
+
+After building, run `pnpm test:browser` with Playwright available. You can use
+an existing installation through `PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs`.
+Set `BROWSER=chromium`, `firefox` or `webkit` and install that browser with Playwright.
+`BROWSER_CHANNEL=chrome` uses an installed Chrome. No user profile is used.
+The test uses real browser layout with deterministic animation stepping. It
+is not a substitute for physical touch-device testing. Apollo also reports
+current frame-cost samples; it does not assert an unmeasured speedup.
