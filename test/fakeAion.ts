@@ -6,7 +6,9 @@ export function createFakeAion(): Aion & { frame: (delta: number) => void } {
   let frameId = 0;
   const fake = {
     stopped: true,
-    queue: [],
+    get queue() {
+      return [...handlers].map(([id, handler]) => ({ id, handler, step: 1 }));
+    },
     start: () => {
       fake.stopped = false;
     },
