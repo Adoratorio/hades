@@ -314,6 +314,10 @@ class Hades {
     return pluginId;
   }
 
+  public registerPlugins(plugins: HadesPlugin[], ids: string[] = []): string[] {
+    return plugins.map((plugin, index) => this.registerPlugin(plugin, ids[index]));
+  }
+
   public unregisterPlugin(id: string): boolean {
     const foundIndex = this.#plugins.findIndex((p) => p.id === id);
     if (foundIndex === -1) {
@@ -326,10 +330,6 @@ class Hades {
     }
     this.#plugins.splice(foundIndex, 1);
     return true;
-  }
-
-  public registerPlugins(plugins: HadesPlugin[], ids: string[] = []): string[] {
-    return plugins.map((plugin, index) => this.registerPlugin(plugin, ids[index]));
   }
 
   public getPlugin<T extends HadesPlugin = HadesPlugin>(name: string): T | undefined {
