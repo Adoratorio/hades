@@ -9,6 +9,7 @@ class VirtualRender implements HadesPlugin {
   #lastFrame = 0;
   readonly #REFLOW_THROTTLE = 100;
   #resizeObserver: ResizeObserver | null = null;
+  #lastTransform = '';
   #onResize = (): void => {
     this.#computeBoundaries();
   };
@@ -64,40 +65,42 @@ class VirtualRender implements HadesPlugin {
     if (typeof window === 'undefined') {
       return;
     }
-    const containerRect = this.#options.scrollNode.getBoundingClientRect();
+    // Layout size (transforms excluded): the node is translated while scrolling
+    const { offsetWidth, offsetHeight } = this.#options.scrollNode;
 
     // Safety: never allow negative boundaries
     this.#options.boundaries = new Boundaries(
       0,
-      Math.max(0, containerRect.width - window.innerWidth),
+      Math.max(0, offsetWidth - window.innerWidth),
       0,
-      Math.max(0, containerRect.height - window.innerHeight),
+      Math.max(0, offsetHeight - window.innerHeight),
     );
   }
 
   public render(context: Hades): void {
-    const factor = 10 ** this.#options.precision;
+    if (!this.#options.renderScroll) {
+      return;
+    }
 
-    // GC optimization: mathematical rounding
+    const factor = 10 ** this.#options.precision;
     const px = this.#options.lockX ? 0 : Math.round(context.amount.x * -1 * factor) / factor;
     const py = this.#options.lockY ? 0 : Math.round(context.amount.y * -1 * factor) / factor;
 
-    if (this.#options.renderScroll) {
-      this.#options.scrollNode.style.transform = `translate3d(${px}px, ${py}px, 0)`;
+    // Skip the style write when the position has not changed
+    const transform = `translate3d(${px}px, ${py}px, 0)`;
+    if (transform === this.#lastTransform) {
+      return;
     }
+    this.#lastTransform = transform;
+    this.#options.scrollNode.style.transform = transform;
   }
 
   public scroll(context: Hades): void {
     if (!this.#options.infiniteScroll) {
+      const { min, max } = this.#options.boundaries;
       context.internalTemp = {
-        x: Math.min(
-          Math.max(context.internalTemp.x, this.#options.boundaries.min.x),
-          this.#options.boundaries.max.x,
-        ),
-        y: Math.min(
-          Math.max(context.internalTemp.y, this.#options.boundaries.min.y),
-          this.#options.boundaries.max.y,
-        ),
+        x: Math.min(Math.max(context.internalTemp.x, min.x), max.x),
+        y: Math.min(Math.max(context.internalTemp.y, min.y), max.y),
       };
     }
   }
@@ -120,6 +123,12 @@ class VirtualRender implements HadesPlugin {
     }
   }
 
+  public get scrollNode(): HTMLElement {
+    return this.#options.scrollNode;
+  }
+  public get infiniteScroll(): boolean {
+    return this.#options.infiniteScroll;
+  }
   public set infiniteScroll(infiniteScroll: boolean) {
     this.#options.infiniteScroll = infiniteScroll;
   }

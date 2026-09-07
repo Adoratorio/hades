@@ -1,7 +1,7 @@
 import Boundaries from '../../Boundaries.ts';
 import { type HadesPlugin, type HermesEvent, type Vec2 } from '../../types.ts';
 import type Hades from '../../index.ts';
-import { isScrollableElement } from '../../utils.ts';
+import { getScrollPosition, isScrollableElement } from '../../utils.ts';
 import { type LenisRenderOptions } from './types.ts';
 
 class LenisRender implements HadesPlugin {
@@ -103,15 +103,7 @@ class LenisRender implements HadesPlugin {
 
   #nativeScroll(_event: Event): void {
     if (this.#context && !this.#isValidEvent && typeof window !== 'undefined') {
-      const isWindow = this.#options.scrollNode === window;
-      this.#context.scrollTo(
-        {
-          x: isWindow ? window.scrollX : (this.#options.scrollNode as HTMLElement).scrollLeft,
-          y: isWindow ? window.scrollY : (this.#options.scrollNode as HTMLElement).scrollTop,
-        },
-        0,
-        true,
-      );
+      this.#context.scrollTo(getScrollPosition(this.#options.scrollNode), 0, true);
     }
 
     if (typeof window !== 'undefined') {

@@ -1,17 +1,23 @@
 import { type HadesPlugin, type Vec2 } from '../../types.ts';
 import type Hades from '../../index.ts';
-import type LenisRender from '../lenis-render/index.ts';
-import type VirtualRender from '../virtual-render/index.ts';
+import { hasBoundaries, isWindow } from '../../utils.ts';
 import { type DragAndScrollOptions } from './types.ts';
 
 class DragAndScroll implements HadesPlugin {
   #context: Hades | null = null;
   #options: DragAndScrollOptions;
   #eventNode: HTMLElement | Window | null = null;
-  #pointerDownHandler: (event: Event) => void;
-  #pointerMoveHandler: (event: Event) => void;
-  #pointerUpHandler: (event: Event) => void;
+  #pointerDownHandler = (e: Event): void => this.#pointerDown(e as PointerEvent);
+  #pointerMoveHandler = (e: Event): void => this.#pointerMove(e as PointerEvent);
+  #pointerUpHandler = (e: Event): void => this.#pointerUp(e as PointerEvent);
+  // Native image/link dragging would take over the gesture
+  #dragStartHandler = (e: Event): void => {
+    if (this.#isDragging) {
+      e.preventDefault();
+    }
+  };
   #isDragging = false;
+  #userSelect = '';
   #prevPoint: Vec2 = { x: 0, y: 0 };
 
   public name = 'DragAndScroll';
@@ -26,10 +32,6 @@ class DragAndScroll implements HadesPlugin {
       invert: false,
     };
     this.#options = { ...defaults, ...options };
-
-    this.#pointerDownHandler = (e: Event): void => this.#pointerDown(e as PointerEvent);
-    this.#pointerMoveHandler = (e: Event): void => this.#pointerMove(e as PointerEvent);
-    this.#pointerUpHandler = (e: Event): void => this.#pointerUp(e as PointerEvent);
   }
 
   public register(context: Hades): void {
@@ -40,45 +42,87 @@ class DragAndScroll implements HadesPlugin {
   }
 
   public attach(): void {
-    let node = this.#context?.root;
-    if (this.#options.proxyNode) {
-      node = this.#options.proxyNode;
-    }
+    const node = this.#options.proxyNode ?? this.#context?.root;
     if (typeof node === 'undefined' || node === null) {
       throw new Error('[Hades] No context or proxyNode specified for DragAndScroll plugin');
     }
 
     this.#eventNode = node;
 
-    if (typeof window !== 'undefined' && this.#eventNode === window) {
+    if (isWindow(node)) {
       this.#options.changeCursor = false;
     }
-    if (this.#options.changeCursor) {
-      (this.#eventNode as HTMLElement).style.cursor = 'grab';
-    }
+    this.#setCursor('grab');
 
-    this.#eventNode?.addEventListener('pointerdown', this.#pointerDownHandler);
-    this.#eventNode?.addEventListener('pointermove', this.#pointerMoveHandler);
-    this.#eventNode?.addEventListener('pointerup', this.#pointerUpHandler);
-    this.#eventNode?.addEventListener('pointerleave', this.#pointerUpHandler);
+    node.addEventListener('pointerdown', this.#pointerDownHandler);
+    node.addEventListener('pointermove', this.#pointerMoveHandler);
+    node.addEventListener('pointerup', this.#pointerUpHandler);
+    node.addEventListener('pointercancel', this.#pointerUpHandler);
+    node.addEventListener('dragstart', this.#dragStartHandler);
   }
 
   public detach(): void {
-    this.#eventNode?.removeEventListener('pointerdown', this.#pointerDownHandler);
-    this.#eventNode?.removeEventListener('pointermove', this.#pointerMoveHandler);
-    this.#eventNode?.removeEventListener('pointerup', this.#pointerUpHandler);
-    this.#eventNode?.removeEventListener('pointerleave', this.#pointerUpHandler);
+    const node = this.#eventNode;
+    if (node === null) {
+      return;
+    }
+    node.removeEventListener('pointerdown', this.#pointerDownHandler);
+    node.removeEventListener('pointermove', this.#pointerMoveHandler);
+    node.removeEventListener('pointerup', this.#pointerUpHandler);
+    node.removeEventListener('pointercancel', this.#pointerUpHandler);
+    node.removeEventListener('dragstart', this.#dragStartHandler);
+    this.#endDrag();
+  }
+
+  // Text selection is disabled only for the duration of a drag: preventing the
+  // pointerdown default would also stop form controls from getting focus
+  #startDrag(): void {
+    this.#isDragging = true;
+    if (this.#eventNode && !isWindow(this.#eventNode)) {
+      this.#userSelect = this.#eventNode.style.userSelect;
+      this.#eventNode.style.userSelect = 'none';
+    }
+    this.#setCursor('grabbing');
+  }
+
+  #endDrag(): void {
+    if (!this.#isDragging) {
+      return;
+    }
+    this.#isDragging = false;
+    if (this.#eventNode && !isWindow(this.#eventNode)) {
+      this.#eventNode.style.userSelect = this.#userSelect;
+    }
+    this.#setCursor('grab');
+  }
+
+  #setCursor(cursor: string): void {
+    if (this.#options.changeCursor && this.#eventNode && !isWindow(this.#eventNode)) {
+      this.#eventNode.style.cursor = cursor;
+    }
+  }
+
+  // Pointer capture keeps the drag alive when the pointer leaves the node;
+  // `window` cannot capture, so there the drag simply ends on pointerup
+  #capture(event: PointerEvent, capture: boolean): void {
+    const node = this.#eventNode;
+    if (node === null || isWindow(node)) {
+      return;
+    }
+    if (capture) {
+      node.setPointerCapture(event.pointerId);
+    } else if (node.hasPointerCapture(event.pointerId)) {
+      node.releasePointerCapture(event.pointerId);
+    }
   }
 
   #pointerDown(event: PointerEvent): void {
-    if (this.#isContextPaused || event.pointerType !== 'mouse') {
+    if (this.#isContextPaused || event.pointerType !== 'mouse' || event.button !== 0) {
       return;
     }
-    this.#isDragging = true;
     this.#prevPoint = { x: event.clientX, y: event.clientY };
-    if (this.#options.changeCursor) {
-      (this.#eventNode as HTMLElement).style.cursor = 'grabbing';
-    }
+    this.#capture(event, true);
+    this.#startDrag();
   }
 
   #pointerMove(event: PointerEvent): void {
@@ -94,42 +138,37 @@ class DragAndScroll implements HadesPlugin {
       };
 
       const tempAmount = {
-        x: this.#context.internalAmount.x + (!this.#options.invert ? delta.x : delta.y),
-        y: this.#context.internalAmount.y + (!this.#options.invert ? delta.y : delta.x),
+        x: this.#context.internalAmount.x + (this.#options.invert ? delta.y : delta.x),
+        y: this.#context.internalAmount.y + (this.#options.invert ? delta.x : delta.y),
       };
 
-      // `getRenderer()` may return NativeRender, which has no boundaries to clamp against
+      // NativeRender has no boundaries to clamp against
       const renderer = this.#context.getRenderer();
-      if (renderer && 'boundaries' in renderer) {
-        const { boundaries } = renderer as LenisRender | VirtualRender;
+      if (hasBoundaries(renderer)) {
+        const { boundaries } = renderer;
         tempAmount.x = Math.min(Math.max(boundaries.min.x, tempAmount.x), boundaries.max.x);
         tempAmount.y = Math.min(Math.max(boundaries.min.y, tempAmount.y), boundaries.max.y);
       }
-      this.#context?.scrollTo(tempAmount, this.#options.smooth ? this.#context.easing.duration : 0);
+      this.#context.scrollTo(tempAmount, this.#options.smooth ? this.#context.easing.duration : 0);
     }
     this.#prevPoint = point;
   }
 
   #pointerUp(event: PointerEvent): void {
-    if (this.#isContextPaused || event.pointerType !== 'mouse') {
+    if (event.pointerType !== 'mouse' || !this.#isDragging) {
       return;
     }
-    this.#isDragging = false;
-    if (this.#options.changeCursor) {
-      (this.#eventNode as HTMLElement).style.cursor = 'grab';
-    }
+    this.#capture(event, false);
+    this.#endDrag();
   }
 
   public play(): void {
-    if (this.#options.changeCursor && this.#eventNode) {
-      (this.#eventNode as HTMLElement).style.cursor = 'grab';
-    }
+    this.#setCursor('grab');
   }
 
   public pause(): void {
-    if (this.#options.changeCursor && this.#eventNode) {
-      (this.#eventNode as HTMLElement).style.cursor = 'unset';
-    }
+    this.#endDrag();
+    this.#setCursor('unset');
   }
 
   public destroy(): void {

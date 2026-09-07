@@ -1,15 +1,8 @@
-import { type Vec2 } from './types.ts';
+import { type Bounds, type Vec2 } from './types.ts';
 
-class Boundaries {
-  min: Vec2 = {
-    x: 0,
-    y: 0,
-  };
-
-  max: Vec2 = {
-    x: 0,
-    y: 0,
-  };
+class Boundaries implements Bounds {
+  min: Vec2 = { x: 0, y: 0 };
+  max: Vec2 = { x: 0, y: 0 };
 
   constructor(xMin: number, xMax: number, yMin: number, yMax: number) {
     this.min.x = xMin;

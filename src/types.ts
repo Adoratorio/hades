@@ -34,12 +34,18 @@ export interface Vec2 {
   y: number;
 }
 
+// Smoothing state: each frame moves `current` from `initial` towards `final`
+// by the easing curve evaluated at `delta / duration`
 export interface Timeline {
-  start: number;
   duration: number;
   initial: Vec2;
   final: Vec2;
   current: Vec2;
+}
+
+export interface Bounds {
+  min: Vec2;
+  max: Vec2;
 }
 
 export interface Easing {
@@ -72,4 +78,9 @@ export interface HadesPlugin {
   play?: (context: Hades) => void;
   // Same as per play but when the context is paused
   pause?: (context: Hades) => void;
+}
+
+// A renderer plugin exposing the scrollable area (VirtualRender, LenisRender)
+export interface BoundedRenderer extends HadesPlugin {
+  readonly boundaries: Bounds;
 }

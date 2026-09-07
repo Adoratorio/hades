@@ -18,13 +18,10 @@ const style: string = `
   opacity: 0;
   background: ${TRACK_BG};
   pointer-events: auto;
+  touch-action: none;
   -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-    user-select: none;
-
-  -webkit-transition: opacity 0.5s 0.5s ease-out;
-    transition: opacity 0.5s 0.5s ease-out;
+  user-select: none;
+  transition: opacity 0.5s 0.5s ease-out;
 }
 [data-scrollbar="track-x"] {
   left: 0;
@@ -41,8 +38,7 @@ const style: string = `
 [data-scrollbar].show,
 [data-scrollbar]:hover {
   opacity: 1;
-  -webkit-transition-delay: 0s;
-    transition-delay: 0s;
+  transition-delay: 0s;
 }
 .scrollbar__thumb {
   position: absolute;

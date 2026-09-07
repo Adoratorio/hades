@@ -3,6 +3,6 @@ export interface DragAndScrollOptions {
   changeCursor: boolean;
   multiplier: number;
   autoHandleEvents: boolean;
-  smooth?: boolean;
+  smooth: boolean;
   invert: boolean;
 }

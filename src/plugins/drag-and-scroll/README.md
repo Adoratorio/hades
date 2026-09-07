@@ -1,6 +1,6 @@
 # DragAndScroll
 
-`DragAndScroll` is a plugin for `Hades` that will allow desktop browser to scroll using drag gestures. It is used on website where dragging an element needs to move the Hades scroll. _`DragAndScroll` automatically manages touch devices, and prevent the attachment of the events on those devices_.
+`DragAndScroll` is a plugin for `Hades` that will allow desktop browser to scroll using drag gestures. It is used on website where dragging an element needs to move the Hades scroll. _`DragAndScroll` reacts to mouse pointers only, so touch devices keep their native gestures_. While dragging, text selection and native image dragging are disabled on the node and the pointer is captured, so the drag survives leaving the node.
 
 ## Available options
 

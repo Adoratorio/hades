@@ -6,16 +6,16 @@
 
 `VirtualRender` accepts in the constructor an option object with the following possible props.
 
-| parameter      |     type      |                    default                     | description                                                                                                              |
-| :------------- | :-----------: | :--------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------- |
-| scrollNode     | `HTMLElement` |                `document.body`                 | The DOM element to apply the `transform` to                                                                              |
-| lockX          |   `boolean`   |                     `true`                     | If the delta on x will be discarded                                                                                      |
-| lockY          |   `boolean`   |                    `false`                     | If the delta on y will be discarded                                                                                      |
-| renderScroll   |   `boolean`   |                     `true`                     | If the render is applied or not                                                                                          |
-| infiniteScroll |   `boolean`   |                    `false`                     | If the amount will be bounded or not, if false boundaries are taken into account                                         |
-| autoBoundaries |   `boolean`   |                     `true`                     | If `true` the boundaries are calculated each frame using the `getBoundingClientRect()` method on the `scrollNode` parent |
-| boundaries     | `Boundaries`  | `{ min: { x: 0, y: 0 }, max: { x: 0, y: 0 } }` | The boundaries to clamp di amount to                                                                                     |
-| precision      |   `number`    |                      `4`                       | The precision used to round the actual pixel amount to before render                                                     |
+| parameter      |     type      |                    default                     | description                                                                                                                                               |
+| :------------- | :-----------: | :--------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| scrollNode     | `HTMLElement` |                `document.body`                 | The DOM element to apply the `transform` to                                                                                                               |
+| lockX          |   `boolean`   |                     `true`                     | If the delta on x will be discarded                                                                                                                       |
+| lockY          |   `boolean`   |                    `false`                     | If the delta on y will be discarded                                                                                                                       |
+| renderScroll   |   `boolean`   |                     `true`                     | If the render is applied or not                                                                                                                           |
+| infiniteScroll |   `boolean`   |                    `false`                     | If the amount will be bounded or not, if false boundaries are taken into account                                                                          |
+| autoBoundaries |   `boolean`   |                     `true`                     | If `true` the boundaries are computed from the `scrollNode` layout size (`offsetWidth`/`offsetHeight`) and refreshed on resize through a `ResizeObserver` |
+| boundaries     | `Boundaries`  | `{ min: { x: 0, y: 0 }, max: { x: 0, y: 0 } }` | The boundaries to clamp di amount to                                                                                                                      |
+| precision      |   `number`    |                      `4`                       | The precision used to round the actual pixel amount to before render                                                                                      |
 
 ```typescript
 import { VirtualRender } from '@adoratorio/hades/plugins';

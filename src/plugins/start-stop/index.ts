@@ -1,5 +1,6 @@
 import { type HadesPlugin, type Vec2 } from '../../types.ts';
 import type Hades from '../../index.ts';
+import { getScrollPosition } from '../../utils.ts';
 import { type StartStopOptions } from './types.ts';
 
 class StartStop implements HadesPlugin {
@@ -30,7 +31,11 @@ class StartStop implements HadesPlugin {
       precision: 2,
       mobileDelay: 500,
     };
-    this.#options = { ...defaults, ...options };
+    this.#options = {
+      ...defaults,
+      ...options,
+      callbacks: { ...defaults.callbacks, ...options.callbacks },
+    };
 
     if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
       this.#pointerFineMQL = window.matchMedia('(pointer: fine)');
@@ -46,25 +51,20 @@ class StartStop implements HadesPlugin {
       const vX = Math.round(context.velocity.x * factor) / factor;
       const vY = Math.round(context.velocity.y * factor) / factor;
       this.#check(vX, vY);
-    } else {
-      const ts = Date.now();
-      const delta = ts - this.#prevTs;
-      const isWindow = typeof window !== 'undefined' && this.#options.scrollNode === window;
-      const node = this.#options.scrollNode as HTMLElement;
-
-      const currentX = isWindow ? window.scrollX : node.scrollLeft || 0;
-      const currentY = isWindow ? window.scrollY : node.scrollTop || 0;
-
-      const vX = currentX - this.#prev.x;
-      const vY = currentY - this.#prev.y;
-
-      if (delta > this.#options.mobileDelay) {
-        this.#prevTs = ts;
-        this.#check(vX, vY);
-      }
-
-      this.#prev = { x: currentX, y: currentY };
+      return;
     }
+
+    // Coarse pointers scroll natively: sample the scroll position every
+    // `mobileDelay` ms and compare with the previous sample, so any movement
+    // inside the window counts
+    const ts = Date.now();
+    if (ts - this.#prevTs < this.#options.mobileDelay) {
+      return;
+    }
+    const current = getScrollPosition(this.#options.scrollNode);
+    this.#check(current.x - this.#prev.x, current.y - this.#prev.y);
+    this.#prev = current;
+    this.#prevTs = ts;
   }
 
   #check(x: number, y: number): void {
@@ -89,9 +89,7 @@ class StartStop implements HadesPlugin {
 
   #emitStillChange(type: string): void {
     if (this.#options.emitGlobal && typeof window !== 'undefined') {
-      const eventInit: CustomEventInit = {};
-      const customEvent: CustomEvent = new CustomEvent(`hades-${type}`, eventInit);
-      window.dispatchEvent(customEvent);
+      window.dispatchEvent(new CustomEvent(`hades-${type}`));
     }
   }
 

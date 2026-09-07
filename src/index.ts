@@ -14,6 +14,15 @@ import { EASINGS } from './easing.ts';
 
 type Hermes = InstanceType<typeof HermesManager>;
 
+// Below this distance (px) the smoothing snaps onto the target, so the scroll
+// settles instead of approaching the target forever
+const SETTLE_EPSILON = 0.01;
+const RENDERER_NAMES: ReadonlySet<string> = new Set([
+  'VirtualRender',
+  'LenisRender',
+  'NativeRender',
+]);
+
 let frameIdCounter = 0;
 
 class Hades {
@@ -25,13 +34,11 @@ class Hades {
   #options: HadesOptions;
   #engine: Aion;
   #manager: Hermes;
-  #scrollHandler: (event: HermesEvent) => void;
-  #frameHandler: (delta: number, frameId: number) => void;
   #timeline: Timeline;
   #prevDirection: Vec2 = { x: Hades.DIRECTION.INITIAL, y: Hades.DIRECTION.INITIAL };
   #prevAmount: Vec2 = { x: 0, y: 0 };
   #automaticScrolling = false;
-  #imediateScrolling = false;
+  #immediateScrolling = false;
   #aionId = `hades-frame-${frameIdCounter++}`;
   #plugins: HadesPlugin[] = [];
   #internalId = 0;
@@ -41,8 +48,12 @@ class Hades {
   public running = false;
 
   constructor(options: Partial<HadesOptions> = {}) {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      throw new Error('[Hades] You are not using this package in a browser environment');
+    }
+
     const defaults: HadesOptions = {
-      root: typeof document !== 'undefined' ? document.body : ({} as HTMLElement),
+      root: document.body,
       easing: {
         mode: EASINGS.LINEAR,
         duration: 1000,
@@ -61,18 +72,20 @@ class Hades {
       debug: false,
     };
 
-    this.#options = { ...defaults, ...options };
+    // Nested objects are merged too, so a partial `easing` keeps the other defaults
+    this.#options = {
+      ...defaults,
+      ...options,
+      easing: { ...defaults.easing, ...options.easing },
+      threshold: { ...defaults.threshold, ...options.threshold },
+    };
 
     this.#timeline = {
-      start: 0,
       duration: this.#options.easing.duration,
       initial: { x: 0, y: 0 },
       final: { x: 0, y: 0 },
       current: { x: 0, y: 0 },
     };
-
-    this.#scrollHandler = (event: HermesEvent): void => this.#scroll(event);
-    this.#frameHandler = (delta: number): void => this.#frame(delta);
 
     this.#manager = new HermesManager({
       mode: MODE.VIRTUAL,
@@ -82,14 +95,13 @@ class Hades {
       debug: this.#options.debug,
     });
 
+    this.#engine = this.#options.aion ?? new AionEngine({ debug: this.#options.debug });
+    this.#engine.add(this.#frame, this.#aionId);
+    this.#engine.start();
+
     if (this.#options.autoplay) {
       this.play();
     }
-
-    this.#engine = this.#options.aion ?? new AionEngine({ debug: this.#options.debug });
-
-    this.#engine.add(this.#frameHandler, this.#aionId);
-    this.#engine.start();
   }
 
   #debugWarn(message: string): void {
@@ -98,61 +110,87 @@ class Hades {
     }
   }
 
-  #frame(delta: number): void {
-    this.#plugins.forEach((plugin) => plugin.preFrame && plugin.preFrame(this));
+  #frame = (delta: number): void => {
+    this.#plugins.forEach((plugin) => plugin.preFrame?.(this));
 
-    this.#timeline.final.x = this.#amount.x;
-    this.#timeline.final.y = this.#amount.y;
+    this.#advance(delta);
+    this.#updateVelocity(delta || 1);
+    this.#updateDirection();
 
-    delta = Math.min(Math.max(delta, 0), this.#options.easing.duration);
-    let time = delta / this.#timeline.duration;
+    const { initial, final, current } = this.#timeline;
+    initial.x = current.x;
+    initial.y = current.y;
 
-    if (this.#imediateScrolling) {
+    // A programmatic scroll is over once the target is reached
+    if (this.#automaticScrolling && current.x === final.x && current.y === final.y) {
+      this.#automaticScrolling = false;
+      this.#timeline.duration = this.#options.easing.duration;
+    }
+
+    this.#plugins.forEach((plugin) => plugin.render?.(this));
+  };
+
+  // Move `current` towards the target by the eased fraction of this frame
+  #advance(delta: number): void {
+    const { initial, final, current } = this.#timeline;
+    final.x = this.#amount.x;
+    final.y = this.#amount.y;
+
+    // Clamp the frame delta to the active duration so `time` never exceeds 1
+    const clamped = Math.min(Math.max(delta, 0), this.#timeline.duration);
+    let time = clamped / this.#timeline.duration;
+
+    if (this.#immediateScrolling) {
       time = 1;
-      this.#imediateScrolling = false;
+      this.#immediateScrolling = false;
     }
 
     time = this.#options.easing.mode(time);
 
-    this.#timeline.current.x =
-      this.#timeline.initial.x + time * (this.#timeline.final.x - this.#timeline.initial.x);
-    this.#timeline.current.y =
-      this.#timeline.initial.y + time * (this.#timeline.final.y - this.#timeline.initial.y);
+    current.x = initial.x + time * (final.x - initial.x);
+    current.y = initial.y + time * (final.y - initial.y);
 
-    const current: Vec2 = {
-      x: this.#timeline.current.x,
-      y: this.#timeline.current.y,
-    };
-    this.amount = current;
+    // Settle onto the target once close enough
+    if (Math.abs(final.x - current.x) < SETTLE_EPSILON) {
+      current.x = final.x;
+    }
+    if (Math.abs(final.y - current.y) < SETTLE_EPSILON) {
+      current.y = final.y;
+    }
 
-    const dt = delta || 1;
+    // `amount` is a fresh object every frame: `#prevAmount` keeps the previous
+    // one, which is what the velocity is computed against
+    this.amount = { x: current.x, y: current.y };
+  }
+
+  // `dt` is the frame delta; a 0 delta is treated as 1 to avoid NaN/Infinity
+  #updateVelocity(dt: number): void {
     const precisionFactor = 10 ** this.#options.precision;
-
-    // GC optimization: round mathematically without allocating strings (toFixed/parseFloat)
     this.velocity = {
-      x: Math.round(((current.x - this.#prevAmount.x) / dt) * precisionFactor) / precisionFactor,
-      y: Math.round(((current.y - this.#prevAmount.y) / dt) * precisionFactor) / precisionFactor,
+      x:
+        Math.round(((this.amount.x - this.#prevAmount.x) / dt) * precisionFactor) / precisionFactor,
+      y:
+        Math.round(((this.amount.y - this.#prevAmount.y) / dt) * precisionFactor) / precisionFactor,
     };
-
     this.#prevAmount = this.amount;
+  }
 
+  // On an abrupt direction change the pending momentum is dropped by moving the
+  // target onto the rendered position. Starting from still is not a change.
+  #updateDirection(): void {
     const currentXDirection = this.#resolveDirection(this.velocity.x);
     const currentYDirection = this.#resolveDirection(this.velocity.y);
 
     if (!this.#options.smoothDirectionChange && !this.#automaticScrolling) {
-      if (currentXDirection !== this.#prevDirection.x) {
+      if (this.#isReversal(currentXDirection, this.#prevDirection.x)) {
         this.#amount.x = this.amount.x;
       }
-      if (currentYDirection !== this.#prevDirection.y) {
+      if (this.#isReversal(currentYDirection, this.#prevDirection.y)) {
         this.#amount.y = this.amount.y;
       }
     }
     this.#prevDirection.x = currentXDirection;
     this.#prevDirection.y = currentYDirection;
-
-    this.#timeline.initial = this.#timeline.current;
-
-    this.#plugins.forEach((plugin) => plugin.render && plugin.render(this));
   }
 
   #resolveDirection(velocity: number): DIRECTION {
@@ -162,10 +200,24 @@ class Hades {
     return velocity > 0 ? Hades.DIRECTION.DOWN : Hades.DIRECTION.UP;
   }
 
-  #scroll(event: HermesEvent): void {
+  #isReversal(current: number, previous: number): boolean {
+    return (
+      current !== Hades.DIRECTION.INITIAL &&
+      previous !== Hades.DIRECTION.INITIAL &&
+      current !== previous
+    );
+  }
+
+  #scroll = (event: HermesEvent): void => {
+    // Work on a copy: the Hermes event (and its global listeners) stay untouched
+    const scrollEvent: HermesEvent = {
+      ...event,
+      delta: { x: event.delta.x, y: event.delta.y },
+    };
+
     let prevent = false;
     this.#plugins.forEach((plugin) => {
-      if (plugin.wheel && plugin.wheel(this, event)) {
+      if (plugin.wheel?.(this, scrollEvent)) {
         prevent = true;
       }
     });
@@ -174,39 +226,44 @@ class Hades {
       return;
     }
 
-    if (Math.abs(event.delta.x) < this.#options.threshold.x) {
-      event.delta.x = 0;
+    const { delta } = scrollEvent;
+    if (Math.abs(delta.x) < this.#options.threshold.x) {
+      delta.x = 0;
     }
-    if (Math.abs(event.delta.y) < this.#options.threshold.y) {
-      event.delta.y = 0;
+    if (Math.abs(delta.y) < this.#options.threshold.y) {
+      delta.y = 0;
     }
 
+    // User input interrupts a programmatic scroll: continue from the rendered
+    // position, not from the (possibly far away) scrollTo target
     if (this.#automaticScrolling) {
       this.#timeline.duration = this.#options.easing.duration;
-      this.amount = this.#prevAmount;
+      this.#amount.x = this.amount.x;
+      this.#amount.y = this.amount.y;
       this.#automaticScrolling = false;
     }
 
-    this.#plugins.forEach((plugin) => plugin.preScroll && plugin.preScroll(this, event));
+    this.#plugins.forEach((plugin) => plugin.preScroll?.(this, scrollEvent));
 
-    event.delta.x *= this.#options.globalMultiplier;
-    event.delta.y *= this.#options.globalMultiplier;
+    delta.x *= this.#options.globalMultiplier;
+    delta.y *= this.#options.globalMultiplier;
 
-    this.#temp.x = this.#amount.x + (!this.#options.invert ? event.delta.x : event.delta.y);
-    this.#temp.y = this.#amount.y + (!this.#options.invert ? event.delta.y : event.delta.x);
+    this.#temp.x = this.#amount.x + (this.#options.invert ? delta.y : delta.x);
+    this.#temp.y = this.#amount.y + (this.#options.invert ? delta.x : delta.y);
 
-    this.#plugins.forEach((plugin) => plugin.scroll && plugin.scroll(this, event));
+    // Plugins may clamp or alter `internalTemp` here
+    this.#plugins.forEach((plugin) => plugin.scroll?.(this, scrollEvent));
 
     this.#amount.x = this.#temp.x;
     this.#amount.y = this.#temp.y;
-  }
+  };
 
   public scrollTo(position: Partial<Vec2>, duration: number, prevent = false): void {
     if (duration > 0) {
       this.#automaticScrolling = true;
       this.#timeline.duration = duration;
     } else {
-      this.#imediateScrolling = true;
+      this.#immediateScrolling = true;
     }
 
     if (!this.#options.smoothDirectionChange) {
@@ -221,13 +278,18 @@ class Hades {
     }
 
     if (!prevent) {
-      this.#plugins.forEach(
-        (plugin) => plugin.scrollTo && plugin.scrollTo(this, position, duration),
-      );
+      this.#plugins.forEach((plugin) => plugin.scrollTo?.(this, position, duration));
     }
   }
 
   public registerPlugin(plugin: HadesPlugin, id?: string): string {
+    if (!plugin.name) {
+      throw new Error('[Hades] Plugin must have a name property');
+    }
+    if (this.#plugins.some((p) => p.name === plugin.name)) {
+      throw new Error(`[Hades] Plugin with name "${plugin.name}" is already registered`);
+    }
+
     const pluginId = id ?? `hades-plugin-${this.#internalId++}`;
     this.#register(plugin, pluginId);
     return pluginId;
@@ -247,37 +309,34 @@ class Hades {
     return true;
   }
 
-  public registerPlugins(plugins: HadesPlugin[], ids: string[]): string[] {
-    const is: string[] = [];
-    plugins.forEach((plugin, index) => {
-      is.push(this.registerPlugin(plugin, ids[index]));
-    });
-    return is;
+  public registerPlugins(plugins: HadesPlugin[], ids: string[] = []): string[] {
+    return plugins.map((plugin, index) => this.registerPlugin(plugin, ids[index]));
   }
 
-  public getPlugin(name: string): HadesPlugin | undefined {
-    return this.#plugins.find((plugin) => plugin.name === name);
+  public getPlugin<T extends HadesPlugin = HadesPlugin>(name: string): T | undefined {
+    return this.#plugins.find((plugin) => plugin.name === name) as T | undefined;
   }
 
   public getRenderer(): HadesPlugin | undefined {
-    const valid = new Set(['VirtualRender', 'LenisRender', 'NativeRender']);
-    return this.#plugins.find((plugin) => valid.has(plugin.name));
+    return this.#plugins.find((plugin) => RENDERER_NAMES.has(plugin.name));
   }
 
   public play(): void {
     this.running = true;
-    this.#manager.on(this.#scrollHandler);
-    this.#plugins.forEach((plugin) => plugin.play && plugin.play(this));
+    this.#manager.on(this.#scroll);
+    this.#plugins.forEach((plugin) => plugin.play?.(this));
   }
 
   public pause(): void {
     this.running = false;
     this.#manager.off();
-    this.#plugins.forEach((plugin) => plugin.pause && plugin.pause(this));
+    this.#plugins.forEach((plugin) => plugin.pause?.(this));
   }
 
   public destroy(): void {
-    this.#plugins.forEach((plugin) => plugin.destroy && plugin.destroy());
+    this.running = false;
+    this.#plugins.forEach((plugin) => plugin.destroy?.());
+    this.#plugins = [];
     this.#manager.destroy();
     this.#engine.remove(this.#aionId);
   }
@@ -309,13 +368,26 @@ class Hades {
     return this.#options.easing;
   }
   public set easing(easing: Easing) {
-    this.#options.easing = easing;
+    this.#options.easing = { ...this.#options.easing, ...easing };
+    if (!this.#automaticScrolling) {
+      this.#timeline.duration = this.#options.easing.duration;
+    }
+  }
+  public get touchMultiplier(): number {
+    return this.#options.touchMultiplier;
   }
   public set touchMultiplier(touchMultiplier: number) {
     this.#options.touchMultiplier = touchMultiplier;
+    this.#manager.touchMultiplier = touchMultiplier;
+  }
+  public get smoothDirectionChange(): boolean {
+    return this.#options.smoothDirectionChange;
   }
   public set smoothDirectionChange(smoothDirectionChange: boolean) {
     this.#options.smoothDirectionChange = smoothDirectionChange;
+  }
+  public get invert(): boolean {
+    return this.#options.invert;
   }
   public set invert(invert: boolean) {
     this.#options.invert = invert;
@@ -332,6 +404,8 @@ class Hades {
 
 export {
   type Aion,
+  type BoundedRenderer,
+  type Bounds,
   type Easing,
   type HadesOptions,
   type HadesPlugin,

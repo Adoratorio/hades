@@ -6,14 +6,22 @@ export const TRACK = {
 export type TRACK = (typeof TRACK)[keyof typeof TRACK];
 
 export interface Track {
-  wrapper: HTMLElement | null;
-  thumb: HTMLElement | null;
+  axis: TRACK;
+  wrapper: HTMLElement;
+  thumb: HTMLElement;
+  // Track length along its axis (px)
+  length: number;
+  // Current thumb length along the axis (px)
   thumbSize: number;
+  // Scrollable amount the thumb size was last computed for
+  max: number;
   ratio: number;
-  drag: boolean;
+  shown: boolean;
 }
 
 export interface ScrollbarsOptions {
   viewport: HTMLElement;
   tracks: TRACK[];
+  // Minimum thumb length (px)
+  minThumbSize: number;
 }

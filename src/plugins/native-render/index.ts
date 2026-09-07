@@ -1,5 +1,6 @@
 import { type HadesPlugin, type Vec2 } from '../../types.ts';
 import type Hades from '../../index.ts';
+import { getScrollPosition } from '../../utils.ts';
 import { type NativeRenderOptions } from './types.ts';
 
 class NativeRender implements HadesPlugin {
@@ -41,19 +42,15 @@ class NativeRender implements HadesPlugin {
     }
     // Preserve the axis that was not specified instead of coercing `undefined` to 0
     const node = this.#options.scrollNode;
-    const isWindow = node === window;
-    const currentX = isWindow ? window.scrollX : (node as HTMLElement).scrollLeft;
-    const currentY = isWindow ? window.scrollY : (node as HTMLElement).scrollTop;
-    node.scrollTo(position.x ?? currentX, position.y ?? currentY);
+    const current = getScrollPosition(node);
+    node.scrollTo(position.x ?? current.x, position.y ?? current.y);
   }
 
   #nativeScroll(_event: Event): void {
     if (this.#context && typeof window !== 'undefined') {
-      const isWindow = this.#options.scrollNode === window;
-      this.#native = {
-        x: isWindow ? window.scrollX : (this.#options.scrollNode as HTMLElement).scrollLeft,
-        y: isWindow ? window.scrollY : (this.#options.scrollNode as HTMLElement).scrollTop,
-      };
+      const position = getScrollPosition(this.#options.scrollNode);
+      this.#native.x = position.x;
+      this.#native.y = position.y;
     }
   }
 

@@ -1,215 +1,244 @@
-import { type HadesPlugin } from '../../types.ts';
+import { type BoundedRenderer, type HadesPlugin } from '../../types.ts';
 import type Hades from '../../index.ts';
-import type VirtualRender from '../virtual-render/index.ts';
+import { hasBoundaries } from '../../utils.ts';
 import { TRACK, type ScrollbarsOptions, type Track } from './types.ts';
 import style from './style.ts';
+
+const CLICK_DURATION = 400;
+const DRAG_DURATION = 200;
 
 class Scrollbars implements HadesPlugin {
   #options: ScrollbarsOptions;
   #context: Hades | null = null;
-  #virtual: VirtualRender | undefined = undefined;
+  #renderer: BoundedRenderer | null = null;
   #wrapper: HTMLElement | null = null;
-  #style: string = style;
   #styleElement: HTMLStyleElement | null = null;
-  #trackX: Track = { wrapper: null, thumb: null, thumbSize: 0, ratio: 0, drag: false };
-  #trackY: Track = { wrapper: null, thumb: null, thumbSize: 0, ratio: 0, drag: false };
-
-  // Cache dimensions to avoid layout thrashing
-  #cachedWidth = 0;
-  #cachedHeight = 0;
+  #tracks: Track[] = [];
+  #dragging: Track | null = null;
   #resizeObserver: ResizeObserver | null = null;
 
-  #drag = false;
-  #detectPositionHandler: (event: MouseEvent) => void;
-  #dragStartHandler: (event: MouseEvent) => void;
-  #dragEndHandler: (event: MouseEvent) => void;
+  #pointerDown = (event: Event): void => this.#onPointerDown(event as PointerEvent);
+  #pointerMove = (event: Event): void => this.#onPointerMove(event as PointerEvent);
+  #pointerUp = (event: Event): void => this.#onPointerUp(event as PointerEvent);
+  #measure = (): void => this.#updateDimensions();
 
   public name = 'Scrollbars';
 
   constructor(options: Partial<ScrollbarsOptions> = {}) {
     const defaults: ScrollbarsOptions = {
-      viewport:
-        typeof document !== 'undefined' ? (document.body as HTMLElement) : ({} as HTMLElement),
+      // The document element is never transformed by the renderers, so the
+      // fixed wrapper stays in place (unlike `document.body` when it is the
+      // VirtualRender scroll node)
+      viewport: typeof document !== 'undefined' ? document.documentElement : ({} as HTMLElement),
       tracks: [TRACK.Y],
+      minThumbSize: 24,
     };
     this.#options = { ...defaults, ...options };
-
-    this.#detectPositionHandler = (event: MouseEvent): void => this.#detectPosition(event);
-    this.#dragStartHandler = (event: MouseEvent): void => this.#dragStart(event);
-    this.#dragEndHandler = (event: MouseEvent): void => this.#dragEnd(event);
   }
 
   public register(context: Hades): void {
-    this.#virtual = context.getPlugin('VirtualRender') as VirtualRender;
-    if (!this.#virtual) {
-      throw new Error('[Hades] Cannot initialize scrollbar without Virtual Render Plugin');
+    const renderer = context.getRenderer();
+    if (!hasBoundaries(renderer)) {
+      throw new Error(
+        '[Hades] Scrollbars needs a renderer exposing boundaries (VirtualRender or LenisRender) registered first',
+      );
     }
+    this.#renderer = renderer;
     this.#context = context;
 
-    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-      this.#appendStyle();
-      this.#appendDom();
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
 
-      // Initialize the ResizeObserver to refresh the cached dimensions
-      if (typeof ResizeObserver !== 'undefined' && this.#wrapper) {
-        this.#resizeObserver = new ResizeObserver(() => this.#updateCachedDimensions());
-        this.#resizeObserver.observe(this.#options.viewport);
-      }
-      this.#updateCachedDimensions();
+    const { scrollNode } = renderer as { scrollNode?: unknown };
+    if (scrollNode instanceof HTMLElement && scrollNode.contains(this.#options.viewport)) {
+      throw new Error(
+        '[Hades] Scrollbars viewport must not be inside the renderer scroll node: the transform would move the scrollbars with the content',
+      );
+    }
 
-      if (!window.matchMedia('(pointer: coarse) and (hover: none)').matches) {
-        this.#attachEvents();
-      }
+    this.#appendStyle();
+    this.#appendDom();
+
+    if (typeof ResizeObserver !== 'undefined' && this.#wrapper) {
+      this.#resizeObserver = new ResizeObserver(this.#measure);
+      this.#resizeObserver.observe(this.#wrapper);
+    }
+    window.addEventListener('resize', this.#measure, { passive: true });
+    this.#updateDimensions();
+
+    if (!window.matchMedia('(pointer: coarse) and (hover: none)').matches) {
+      this.#attachEvents();
     }
   }
 
-  #updateCachedDimensions(): void {
-    if (this.#trackX.wrapper) {
-      this.#cachedWidth = this.#trackX.wrapper.getBoundingClientRect().width;
-    }
-    if (this.#trackY.wrapper) {
-      this.#cachedHeight = this.#trackY.wrapper.getBoundingClientRect().height;
+  #updateDimensions(): void {
+    for (const track of this.#tracks) {
+      const rect = track.wrapper.getBoundingClientRect();
+      track.length = track.axis === TRACK.X ? rect.width : rect.height;
+      // Force the thumb to be sized again on the next render
+      track.max = -1;
     }
   }
 
   #appendDom(): void {
-    const scrollbar = document.createElement('div');
-    scrollbar.classList.add('scrollbar__wrapper');
-    this.#options.viewport.append(scrollbar);
+    const wrapper = document.createElement('div');
+    wrapper.classList.add('scrollbar__wrapper');
+    this.#options.viewport.append(wrapper);
+    this.#wrapper = wrapper;
 
-    this.#options.tracks.forEach((track) => {
-      const wrapper = document.createElement('div');
-      wrapper.setAttribute('data-scrollbar', `track-${track}`);
+    this.#tracks = this.#options.tracks.map((axis) => {
+      const trackWrapper = document.createElement('div');
+      trackWrapper.setAttribute('data-scrollbar', `track-${axis}`);
       const thumb = document.createElement('div');
       thumb.classList.add('scrollbar__thumb');
-      wrapper.append(thumb);
-      scrollbar.append(wrapper);
-
-      this.#wrapper = scrollbar;
-
-      if (track === 'x') {
-        const thumbSize = thumb.getBoundingClientRect().width;
-        this.#trackX = { wrapper, thumb, thumbSize, ratio: 0, drag: false };
-      }
-      if (track === 'y') {
-        const thumbSize = thumb.getBoundingClientRect().height;
-        this.#trackY = { wrapper, thumb, thumbSize, ratio: 0, drag: false };
-      }
+      trackWrapper.append(thumb);
+      wrapper.append(trackWrapper);
+      return {
+        axis,
+        wrapper: trackWrapper,
+        thumb,
+        length: 0,
+        thumbSize: 0,
+        max: -1,
+        ratio: 0,
+        shown: false,
+      };
     });
   }
 
   #appendStyle(): void {
     const styleElement = document.createElement('style');
-    styleElement.textContent = this.#style;
-    if (document.head) {
-      document.head.appendChild(styleElement);
-      this.#styleElement = styleElement;
-    }
+    styleElement.textContent = style;
+    document.head.appendChild(styleElement);
+    this.#styleElement = styleElement;
   }
 
   #attachEvents(): void {
-    if (this.#trackX.wrapper !== null && this.#trackX.thumb !== null) {
-      this.#trackX.wrapper.addEventListener('click', this.#detectPositionHandler);
-      this.#trackX.wrapper.addEventListener('mousedown', this.#dragStartHandler);
+    for (const track of this.#tracks) {
+      track.wrapper.addEventListener('pointerdown', this.#pointerDown);
+      track.wrapper.addEventListener('pointermove', this.#pointerMove);
+      track.wrapper.addEventListener('pointerup', this.#pointerUp);
+      track.wrapper.addEventListener('pointercancel', this.#pointerUp);
     }
-    if (this.#trackY.wrapper !== null && this.#trackY.thumb !== null) {
-      this.#trackY.wrapper.addEventListener('click', this.#detectPositionHandler);
-      this.#trackY.wrapper.addEventListener('mousedown', this.#dragStartHandler);
+  }
+
+  #detachEvents(): void {
+    for (const track of this.#tracks) {
+      track.wrapper.removeEventListener('pointerdown', this.#pointerDown);
+      track.wrapper.removeEventListener('pointermove', this.#pointerMove);
+      track.wrapper.removeEventListener('pointerup', this.#pointerUp);
+      track.wrapper.removeEventListener('pointercancel', this.#pointerUp);
+    }
+  }
+
+  // Thumb length proportional to the visible fraction of the content
+  #sizeThumb(track: Track, max: number): void {
+    if (track.max === max) {
+      return;
+    }
+    track.max = max;
+    const content = track.length + max;
+    const size = content > 0 ? (track.length * track.length) / content : track.length;
+    track.thumbSize = Math.min(track.length, Math.max(this.#options.minThumbSize, size));
+    if (track.axis === TRACK.X) {
+      track.thumb.style.width = `${track.thumbSize}px`;
+    } else {
+      track.thumb.style.height = `${track.thumbSize}px`;
     }
   }
 
   public render(): void {
-    // Use the cached dimensions instead of calling getBoundingClientRect() every frame
-    if (
-      this.#context &&
-      this.#virtual &&
-      this.#trackX.wrapper !== null &&
-      this.#trackX.thumb !== null
-    ) {
-      const maxX = this.#virtual.boundaries.max.x;
-      const ratio = maxX > 0 ? this.#context.amount.x / maxX : 0;
-      const translate = (this.#cachedWidth - this.#trackX.thumbSize) * ratio;
-      this.#trackX.thumb.style.transform = `translate3d(${translate}px, 0px, 0px)`;
-      this.#trackX.wrapper.classList.toggle('show', ratio !== this.#trackX.ratio);
-      this.#trackX.ratio = ratio;
+    if (!this.#context || !this.#renderer) {
+      return;
     }
-    if (
-      this.#context &&
-      this.#virtual &&
-      this.#trackY.wrapper !== null &&
-      this.#trackY.thumb !== null
-    ) {
-      const maxY = this.#virtual.boundaries.max.y;
-      const ratio = maxY > 0 ? this.#context.amount.y / maxY : 0;
-      const translate = (this.#cachedHeight - this.#trackY.thumbSize) * ratio;
-      this.#trackY.thumb.style.transform = `translate3d(0px, ${translate}px, 0px)`;
-      this.#trackY.wrapper.classList.toggle('show', ratio !== this.#trackY.ratio);
-      this.#trackY.ratio = ratio;
-    }
-  }
+    const { amount } = this.#context;
+    const { max } = this.#renderer.boundaries;
 
-  #detectPosition(event: MouseEvent): void {
-    const duration = event.type === 'click' ? 400 : 200;
-    if (
-      this.#context &&
-      this.#virtual &&
-      ((event.type === 'click' && (event.target as HTMLElement).dataset.scrollbar === 'track-y') ||
-        (event.type === 'mousemove' && this.#drag && this.#trackY.drag))
-    ) {
-      if (this.#trackY.wrapper !== null && this.#trackY.thumb !== null && this.#cachedHeight > 0) {
-        this.#context.scrollTo(
-          { y: (event.clientY / this.#cachedHeight) * this.#virtual.boundaries.max.y },
-          duration,
-        );
-      }
-    }
-    if (
-      this.#context &&
-      this.#virtual &&
-      ((event.type === 'click' && (event.target as HTMLElement).dataset.scrollbar === 'track-x') ||
-        (event.type === 'mousemove' && this.#drag && this.#trackX.drag))
-    ) {
-      if (this.#trackX.wrapper !== null && this.#trackX.thumb !== null && this.#cachedWidth > 0) {
-        this.#context.scrollTo(
-          { x: (event.clientX / this.#cachedWidth) * this.#virtual.boundaries.max.x },
-          duration,
-        );
+    for (const track of this.#tracks) {
+      const isX = track.axis === TRACK.X;
+      const axisMax = isX ? max.x : max.y;
+      this.#sizeThumb(track, axisMax);
+
+      const ratio = axisMax > 0 ? (isX ? amount.x : amount.y) / axisMax : 0;
+      if (ratio !== track.ratio) {
+        const translate = (track.length - track.thumbSize) * ratio;
+        track.thumb.style.transform = isX
+          ? `translate3d(${translate}px, 0px, 0px)`
+          : `translate3d(0px, ${translate}px, 0px)`;
+        this.#show(track, true);
+        track.ratio = ratio;
       }
     }
   }
 
-  #dragStart(event: MouseEvent): void {
-    this.#drag = true;
-    if (this.#trackY.wrapper !== null && this.#trackY.thumb !== null) {
-      this.#trackY.wrapper.classList.add('show');
-      this.#trackY.drag =
-        ((event.target as HTMLElement).parentNode as HTMLElement).dataset.scrollbar === 'track-y';
+  public preFrame(): void {
+    // Hide the tracks again once the scroll has settled (dragging keeps them visible)
+    if (this.#context?.still && this.#dragging === null) {
+      for (const track of this.#tracks) {
+        this.#show(track, false);
+      }
     }
-    if (this.#trackX.wrapper !== null && this.#trackX.thumb !== null) {
-      this.#trackX.wrapper.classList.add('show');
-      this.#trackX.drag =
-        ((event.target as HTMLElement).parentNode as HTMLElement).dataset.scrollbar === 'track-x';
-    }
-    document.body.addEventListener('mousemove', this.#detectPositionHandler);
-    document.body.addEventListener('mouseup', this.#dragEndHandler);
-    document.addEventListener('mouseleave', this.#dragEndHandler);
-    document.body.addEventListener('mouseleave', this.#dragEndHandler);
   }
 
-  #dragEnd(_event: MouseEvent): void {
-    this.#drag = false;
-    if (this.#trackY.wrapper !== null && this.#trackY.thumb !== null) {
-      this.#trackY.wrapper.classList.remove('show');
-      this.#trackY.drag = false;
+  #show(track: Track, shown: boolean): void {
+    if (track.shown === shown) {
+      return;
     }
-    if (this.#trackX.wrapper !== null && this.#trackX.thumb !== null) {
-      this.#trackX.wrapper.classList.remove('show');
-      this.#trackX.drag = false;
+    track.shown = shown;
+    track.wrapper.classList.toggle('show', shown);
+  }
+
+  #trackFromEvent(event: PointerEvent): Track | undefined {
+    return this.#tracks.find((track) => track.wrapper === event.currentTarget);
+  }
+
+  // Scroll so that the thumb is centred on the pointer position along the track
+  #scrollToPointer(track: Track, event: PointerEvent, duration: number): void {
+    if (!this.#context || !this.#renderer || track.length <= track.thumbSize) {
+      return;
     }
-    document.body.removeEventListener('mousemove', this.#detectPositionHandler);
-    document.body.removeEventListener('mouseup', this.#dragEndHandler);
-    document.removeEventListener('mouseleave', this.#dragEndHandler);
-    document.body.removeEventListener('mouseleave', this.#dragEndHandler);
+    const isX = track.axis === TRACK.X;
+    const rect = track.wrapper.getBoundingClientRect();
+    const position =
+      (isX ? event.clientX - rect.left : event.clientY - rect.top) - track.thumbSize / 2;
+    const ratio = Math.min(1, Math.max(0, position / (track.length - track.thumbSize)));
+    const { max } = this.#renderer.boundaries;
+    this.#context.scrollTo(isX ? { x: ratio * max.x } : { y: ratio * max.y }, duration);
+  }
+
+  #onPointerDown(event: PointerEvent): void {
+    const track = this.#trackFromEvent(event);
+    if (!track || event.button !== 0) {
+      return;
+    }
+    event.preventDefault();
+    this.#dragging = track;
+    track.wrapper.setPointerCapture(event.pointerId);
+    this.#show(track, true);
+    // Pressing on the track (not on the thumb) jumps there first
+    if (event.target !== track.thumb) {
+      this.#scrollToPointer(track, event, CLICK_DURATION);
+    }
+  }
+
+  #onPointerMove(event: PointerEvent): void {
+    const track = this.#trackFromEvent(event);
+    if (!track || this.#dragging !== track) {
+      return;
+    }
+    this.#scrollToPointer(track, event, DRAG_DURATION);
+  }
+
+  #onPointerUp(event: PointerEvent): void {
+    const track = this.#trackFromEvent(event);
+    if (!track || this.#dragging !== track) {
+      return;
+    }
+    this.#dragging = null;
+    if (track.wrapper.hasPointerCapture(event.pointerId)) {
+      track.wrapper.releasePointerCapture(event.pointerId);
+    }
   }
 
   public destroy(): void {
@@ -217,28 +246,18 @@ class Scrollbars implements HadesPlugin {
       this.#resizeObserver.disconnect();
       this.#resizeObserver = null;
     }
-    if (typeof document !== 'undefined') {
-      if (this.#trackX.wrapper !== null && this.#trackX.thumb !== null) {
-        this.#trackX.wrapper.removeEventListener('click', this.#detectPositionHandler);
-        this.#trackX.wrapper.removeEventListener('mousedown', this.#dragStartHandler);
-      }
-      if (this.#trackY.wrapper !== null && this.#trackY.thumb !== null) {
-        this.#trackY.wrapper.removeEventListener('click', this.#detectPositionHandler);
-        this.#trackY.wrapper.removeEventListener('mousedown', this.#dragStartHandler);
-      }
-      document.body.removeEventListener('mousemove', this.#detectPositionHandler);
-      document.body.removeEventListener('mouseup', this.#dragEndHandler);
-      document.removeEventListener('mouseleave', this.#dragEndHandler);
-      document.body.removeEventListener('mouseleave', this.#dragEndHandler);
-
-      if (this.#styleElement !== null) {
-        this.#styleElement.remove();
-        this.#styleElement = null;
-      }
-      if (this.#wrapper !== null) {
-        this.#wrapper.remove();
-      }
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('resize', this.#measure);
     }
+    this.#detachEvents();
+    this.#styleElement?.remove();
+    this.#styleElement = null;
+    this.#wrapper?.remove();
+    this.#wrapper = null;
+    this.#tracks = [];
+    this.#dragging = null;
+    this.#context = null;
+    this.#renderer = null;
   }
 }
 
