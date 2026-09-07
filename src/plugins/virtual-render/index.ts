@@ -1,3 +1,4 @@
+import { defaultBody } from '../../utils.ts';
 import Boundaries from '../../Boundaries.ts';
 import { type HadesPlugin } from '../../types.ts';
 import type Hades from '../../index.ts';
@@ -10,6 +11,9 @@ class VirtualRender implements HadesPlugin {
   readonly #REFLOW_THROTTLE = 100;
   #resizeObserver: ResizeObserver | null = null;
   #lastTransform = '';
+  #originalTransform = '';
+  #originalBackface = '';
+  #originalWebkitBackface = '';
   #onResize = (): void => {
     this.#computeBoundaries();
   };
@@ -18,7 +22,7 @@ class VirtualRender implements HadesPlugin {
 
   constructor(options: Partial<VirtualRenderOptions> = {}) {
     const defaults: VirtualRenderOptions = {
-      scrollNode: typeof document !== 'undefined' ? document.body : ({} as HTMLElement),
+      scrollNode: options.scrollNode ?? defaultBody(),
       lockX: true,
       lockY: false,
       renderScroll: true,
@@ -35,6 +39,9 @@ class VirtualRender implements HadesPlugin {
       this.#options.autoBoundaries = false;
       this.#options.renderScroll = false;
     } else {
+      this.#originalTransform = this.#options.scrollNode.style.transform;
+      this.#originalBackface = this.#options.scrollNode.style.backfaceVisibility;
+      this.#originalWebkitBackface = this.#options.scrollNode.style.webkitBackfaceVisibility;
       this.#options.scrollNode.style.webkitBackfaceVisibility = 'hidden';
       this.#options.scrollNode.style.backfaceVisibility = 'hidden';
 
@@ -69,7 +76,7 @@ class VirtualRender implements HadesPlugin {
     const { offsetWidth, offsetHeight } = this.#options.scrollNode;
 
     // Safety: never allow negative boundaries
-    this.#options.boundaries = new Boundaries(
+    this.boundaries = new Boundaries(
       0,
       Math.max(0, offsetWidth - window.innerWidth),
       0,
@@ -105,6 +112,16 @@ class VirtualRender implements HadesPlugin {
     }
   }
 
+  public scrollTo(context: Hades): void {
+    if (!this.#options.infiniteScroll) {
+      const { min, max } = this.#options.boundaries;
+      context.internalAmount = {
+        x: Math.min(Math.max(context.internalAmount.x, min.x), max.x),
+        y: Math.min(Math.max(context.internalAmount.y, min.y), max.y),
+      };
+    }
+  }
+
   public startRender(): void {
     this.#options.renderScroll = true;
   }
@@ -114,6 +131,19 @@ class VirtualRender implements HadesPlugin {
   }
 
   public destroy(): void {
+    const style = this.#options.scrollNode?.style;
+    if (style) {
+      if (style.transform === this.#lastTransform) {
+        style.transform = this.#originalTransform;
+      }
+      if (style.backfaceVisibility === 'hidden') {
+        style.backfaceVisibility = this.#originalBackface;
+      }
+      if (style.webkitBackfaceVisibility === 'hidden') {
+        style.webkitBackfaceVisibility = this.#originalWebkitBackface;
+      }
+    }
+    this.#context = null;
     if (this.#resizeObserver !== null) {
       this.#resizeObserver.disconnect();
       this.#resizeObserver = null;
@@ -137,12 +167,23 @@ class VirtualRender implements HadesPlugin {
   }
   public set boundaries(boundaries: Boundaries) {
     this.#options.boundaries = boundaries;
-    if (this.#context !== null) {
-      if (this.#context.amount.y > this.#options.boundaries.max.y) {
-        this.#context.scrollTo({ y: this.#options.boundaries.max.y }, 0);
-      }
-      if (this.#context.amount.x > this.#options.boundaries.max.x) {
-        this.#context.scrollTo({ x: this.#options.boundaries.max.x }, 0);
+    if (this.#context !== null && !this.#options.infiniteScroll) {
+      const { min, max } = boundaries;
+      const current = this.#context.amount;
+      const destination = this.#context.internalAmount;
+      const outside = (point: { x: number; y: number }): boolean =>
+        point.x < min.x || point.x > max.x || point.y < min.y || point.y > max.y;
+      if (outside(current)) {
+        this.#context.scrollTo(
+          {
+            x: Math.min(Math.max(current.x, min.x), max.x),
+            y: Math.min(Math.max(current.y, min.y), max.y),
+          },
+          0,
+          true,
+        );
+      } else if (outside(destination)) {
+        this.scrollTo(this.#context);
       }
     }
   }

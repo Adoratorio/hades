@@ -1,13 +1,17 @@
+import { defaultViewport, hasBoundaries } from '../../utils.ts';
 import { type BoundedRenderer, type HadesPlugin } from '../../types.ts';
 import type Hades from '../../index.ts';
-import { hasBoundaries } from '../../utils.ts';
 import { TRACK, type ScrollbarsOptions, type Track } from './types.ts';
 import style from './style.ts';
 
 const CLICK_DURATION = 400;
 const DRAG_DURATION = 200;
 
+let controlId = 0;
+
 class Scrollbars implements HadesPlugin {
+  #controlledNode: HTMLElement | null = null;
+  #generatedControlId: string | null = null;
   #options: ScrollbarsOptions;
   #context: Hades | null = null;
   #renderer: BoundedRenderer | null = null;
@@ -20,6 +24,7 @@ class Scrollbars implements HadesPlugin {
   #pointerDown = (event: Event): void => this.#onPointerDown(event as PointerEvent);
   #pointerMove = (event: Event): void => this.#onPointerMove(event as PointerEvent);
   #pointerUp = (event: Event): void => this.#onPointerUp(event as PointerEvent);
+  #keydown = (event: Event): void => this.#onKeyDown(event as KeyboardEvent);
   #measure = (): void => this.#updateDimensions();
 
   public name = 'Scrollbars';
@@ -29,7 +34,7 @@ class Scrollbars implements HadesPlugin {
       // The document element is never transformed by the renderers, so the
       // fixed wrapper stays in place (unlike `document.body` when it is the
       // VirtualRender scroll node)
-      viewport: typeof document !== 'undefined' ? document.documentElement : ({} as HTMLElement),
+      viewport: options.viewport ?? defaultViewport(),
       tracks: [TRACK.Y],
       minThumbSize: 24,
     };
@@ -57,6 +62,16 @@ class Scrollbars implements HadesPlugin {
       );
     }
 
+    const controlled = scrollNode instanceof HTMLElement ? scrollNode : document.documentElement;
+    if (!controlled.id) {
+      let id: string;
+      do {
+        id = `hades-scroll-content-${++controlId}`;
+      } while (document.getElementById(id));
+      controlled.id = id;
+      this.#generatedControlId = id;
+    }
+    this.#controlledNode = controlled;
     this.#appendStyle();
     this.#appendDom();
 
@@ -78,6 +93,7 @@ class Scrollbars implements HadesPlugin {
       track.length = track.axis === TRACK.X ? rect.width : rect.height;
       // Force the thumb to be sized again on the next render
       track.max = -1;
+      delete track.translation;
     }
   }
 
@@ -90,6 +106,19 @@ class Scrollbars implements HadesPlugin {
     this.#tracks = this.#options.tracks.map((axis) => {
       const trackWrapper = document.createElement('div');
       trackWrapper.setAttribute('data-scrollbar', `track-${axis}`);
+      trackWrapper.setAttribute('role', 'scrollbar');
+      if (this.#controlledNode) {
+        trackWrapper.setAttribute('aria-controls', this.#controlledNode.id);
+      }
+      trackWrapper.setAttribute(
+        'aria-label',
+        axis === TRACK.X ? 'Horizontal scroll' : 'Vertical scroll',
+      );
+      trackWrapper.setAttribute('aria-orientation', axis === TRACK.X ? 'horizontal' : 'vertical');
+      trackWrapper.setAttribute('aria-valuemin', '0');
+      trackWrapper.setAttribute('aria-valuemax', '0');
+      trackWrapper.setAttribute('aria-valuenow', '0');
+      trackWrapper.tabIndex = 0;
       const thumb = document.createElement('div');
       thumb.classList.add('scrollbar__thumb');
       trackWrapper.append(thumb);
@@ -116,6 +145,7 @@ class Scrollbars implements HadesPlugin {
 
   #attachEvents(): void {
     for (const track of this.#tracks) {
+      track.wrapper.addEventListener('keydown', this.#keydown);
       track.wrapper.addEventListener('pointerdown', this.#pointerDown);
       track.wrapper.addEventListener('pointermove', this.#pointerMove);
       track.wrapper.addEventListener('pointerup', this.#pointerUp);
@@ -125,6 +155,7 @@ class Scrollbars implements HadesPlugin {
 
   #detachEvents(): void {
     for (const track of this.#tracks) {
+      track.wrapper.removeEventListener('keydown', this.#keydown);
       track.wrapper.removeEventListener('pointerdown', this.#pointerDown);
       track.wrapper.removeEventListener('pointermove', this.#pointerMove);
       track.wrapper.removeEventListener('pointerup', this.#pointerUp);
@@ -138,6 +169,8 @@ class Scrollbars implements HadesPlugin {
       return;
     }
     track.max = max;
+    track.wrapper.setAttribute('aria-valuemax', String(max));
+    track.wrapper.tabIndex = max > 0 ? 0 : -1;
     const content = track.length + max;
     const size = content > 0 ? (track.length * track.length) / content : track.length;
     track.thumbSize = Math.min(track.length, Math.max(this.#options.minThumbSize, size));
@@ -153,21 +186,32 @@ class Scrollbars implements HadesPlugin {
       return;
     }
     const { amount } = this.#context;
-    const { max } = this.#renderer.boundaries;
+    const { min, max } = this.#renderer.boundaries;
 
     for (const track of this.#tracks) {
       const isX = track.axis === TRACK.X;
-      const axisMax = isX ? max.x : max.y;
+      const axisMin = isX ? min.x : min.y;
+      const axisMax = (isX ? max.x : max.y) - axisMin;
       this.#sizeThumb(track, axisMax);
 
-      const ratio = axisMax > 0 ? (isX ? amount.x : amount.y) / axisMax : 0;
-      if (ratio !== track.ratio) {
-        const translate = (track.length - track.thumbSize) * ratio;
+      const ratio =
+        axisMax > 0
+          ? Math.min(1, Math.max(0, ((isX ? amount.x : amount.y) - axisMin) / axisMax))
+          : 0;
+      const translate = (track.length - track.thumbSize) * ratio;
+      if (translate !== track.translation) {
         track.thumb.style.transform = isX
           ? `translate3d(${translate}px, 0px, 0px)`
           : `translate3d(0px, ${translate}px, 0px)`;
-        this.#show(track, true);
+        if (ratio !== track.ratio) {
+          this.#show(track, true);
+        }
         track.ratio = ratio;
+        track.translation = translate;
+        track.wrapper.setAttribute(
+          'aria-valuenow',
+          String(Math.round((isX ? amount.x : amount.y) - axisMin)),
+        );
       }
     }
   }
@@ -203,13 +247,58 @@ class Scrollbars implements HadesPlugin {
     const position =
       (isX ? event.clientX - rect.left : event.clientY - rect.top) - track.thumbSize / 2;
     const ratio = Math.min(1, Math.max(0, position / (track.length - track.thumbSize)));
-    const { max } = this.#renderer.boundaries;
-    this.#context.scrollTo(isX ? { x: ratio * max.x } : { y: ratio * max.y }, duration);
+    const { min, max } = this.#renderer.boundaries;
+    this.#context.scrollTo(
+      isX ? { x: min.x + ratio * (max.x - min.x) } : { y: min.y + ratio * (max.y - min.y) },
+      duration,
+    );
+  }
+
+  #onKeyDown(event: KeyboardEvent): void {
+    if (
+      !this.#context ||
+      !this.#renderer ||
+      !this.#context.running ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.altKey
+    ) {
+      return;
+    }
+    const track = this.#tracks.find((item) => item.wrapper === event.currentTarget);
+    if (!track) {
+      return;
+    }
+    const isX = track.axis === TRACK.X;
+    const { min, max } = this.#renderer.boundaries;
+    const current = isX ? this.#context.amount.x : this.#context.amount.y;
+    const steps: Record<string, number> = {
+      PageUp: -track.length,
+      PageDown: track.length,
+      [isX ? 'ArrowLeft' : 'ArrowUp']: -40,
+      [isX ? 'ArrowRight' : 'ArrowDown']: 40,
+    };
+    let target: number;
+    if (event.key === 'Home') {
+      target = isX ? min.x : min.y;
+    } else if (event.key === 'End') {
+      target = isX ? max.x : max.y;
+    } else {
+      const step = steps[event.key];
+      if (step === undefined) {
+        return;
+      }
+      target = current + step;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    target = Math.min(Math.max(target, isX ? min.x : min.y), isX ? max.x : max.y);
+    this.#context.scrollTo(isX ? { x: target } : { y: target }, CLICK_DURATION);
   }
 
   #onPointerDown(event: PointerEvent): void {
     const track = this.#trackFromEvent(event);
-    if (!track || event.button !== 0) {
+    if (!track || event.button !== 0 || !this.#context?.running) {
       return;
     }
     event.preventDefault();
@@ -242,6 +331,15 @@ class Scrollbars implements HadesPlugin {
   }
 
   public destroy(): void {
+    if (
+      this.#controlledNode &&
+      this.#generatedControlId &&
+      this.#controlledNode.id === this.#generatedControlId
+    ) {
+      this.#controlledNode.removeAttribute('id');
+    }
+    this.#controlledNode = null;
+    this.#generatedControlId = null;
     if (this.#resizeObserver !== null) {
       this.#resizeObserver.disconnect();
       this.#resizeObserver = null;

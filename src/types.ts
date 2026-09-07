@@ -16,6 +16,8 @@ export const DIRECTION = {
 export type DIRECTION = (typeof DIRECTION)[keyof typeof DIRECTION];
 
 export interface HadesOptions {
+  // Opt in to immediate movement when the user requests reduced motion.
+  respectReducedMotion?: boolean;
   root: HTMLElement | Window;
   easing: Easing;
   autoplay: boolean;
@@ -84,3 +86,9 @@ export interface HadesPlugin {
 export interface BoundedRenderer extends HadesPlugin {
   readonly boundaries: Bounds;
 }
+
+// Constructor input accepts partial nested settings; resolved options stay complete.
+export type HadesInputOptions = Omit<Partial<HadesOptions>, 'easing' | 'threshold'> & {
+  easing?: Partial<HadesOptions['easing']>;
+  threshold?: Partial<HadesOptions['threshold']>;
+};

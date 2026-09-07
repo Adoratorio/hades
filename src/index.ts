@@ -5,6 +5,7 @@ import {
   type Aion,
   type Easing,
   type HadesOptions,
+  type HadesInputOptions,
   type HadesPlugin,
   type HermesEvent,
   type Timeline,
@@ -32,6 +33,7 @@ class Hades {
   #amount: Vec2 = { x: 0, y: 0 };
   #temp: Vec2 = { x: 0, y: 0 };
   #options: HadesOptions;
+  #motionQuery: MediaQueryList | null = null;
   #engine: Aion;
   #manager: Hermes;
   #timeline: Timeline;
@@ -47,7 +49,7 @@ class Hades {
   public velocity: Vec2 = { x: 0, y: 0 };
   public running = false;
 
-  constructor(options: Partial<HadesOptions> = {}) {
+  constructor(options: HadesInputOptions = {}) {
     if (typeof window === 'undefined' || typeof document === 'undefined') {
       throw new Error('[Hades] You are not using this package in a browser environment');
     }
@@ -79,6 +81,14 @@ class Hades {
       easing: { ...defaults.easing, ...options.easing },
       threshold: { ...defaults.threshold, ...options.threshold },
     };
+
+    if (!Number.isFinite(this.#options.easing.duration) || this.#options.easing.duration < 0) {
+      throw new RangeError('[Hades] Easing duration must be finite and non-negative');
+    }
+
+    if (this.#options.respectReducedMotion && typeof window.matchMedia === 'function') {
+      this.#motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    }
 
     this.#timeline = {
       duration: this.#options.easing.duration,
@@ -138,9 +148,9 @@ class Hades {
 
     // Clamp the frame delta to the active duration so `time` never exceeds 1
     const clamped = Math.min(Math.max(delta, 0), this.#timeline.duration);
-    let time = clamped / this.#timeline.duration;
+    let time = this.#timeline.duration === 0 ? 1 : clamped / this.#timeline.duration;
 
-    if (this.#immediateScrolling) {
+    if (this.#immediateScrolling || this.#motionQuery?.matches) {
       time = 1;
       this.#immediateScrolling = false;
     }
@@ -259,11 +269,20 @@ class Hades {
   };
 
   public scrollTo(position: Partial<Vec2>, duration: number, prevent = false): void {
+    if (
+      !Number.isFinite(duration) ||
+      ![position.x, position.y].every((value) => value === undefined || Number.isFinite(value))
+    ) {
+      throw new RangeError('[Hades] Scroll position and duration must be finite');
+    }
+    this.#immediateScrolling = duration <= 0;
+    this.#automaticScrolling = duration > 0;
     if (duration > 0) {
       this.#automaticScrolling = true;
       this.#timeline.duration = duration;
     } else {
       this.#immediateScrolling = true;
+      this.#timeline.duration = this.#options.easing.duration;
     }
 
     if (!this.#options.smoothDirectionChange) {
@@ -367,7 +386,13 @@ class Hades {
   public get easing(): Easing {
     return this.#options.easing;
   }
-  public set easing(easing: Easing) {
+  public set easing(easing: Partial<Easing>) {
+    if (
+      easing.duration !== undefined &&
+      (!Number.isFinite(easing.duration) || easing.duration < 0)
+    ) {
+      throw new RangeError('[Hades] Easing duration must be finite and non-negative');
+    }
     this.#options.easing = { ...this.#options.easing, ...easing };
     if (!this.#automaticScrolling) {
       this.#timeline.duration = this.#options.easing.duration;
@@ -403,6 +428,7 @@ class Hades {
 }
 
 export {
+  type HadesInputOptions,
   type Aion,
   type BoundedRenderer,
   type Bounds,

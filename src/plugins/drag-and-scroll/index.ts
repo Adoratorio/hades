@@ -18,6 +18,8 @@ class DragAndScroll implements HadesPlugin {
   };
   #isDragging = false;
   #userSelect = '';
+  #originalCursor = '';
+  #pointerId: number | null = null;
   #prevPoint: Vec2 = { x: 0, y: 0 };
 
   public name = 'DragAndScroll';
@@ -47,7 +49,14 @@ class DragAndScroll implements HadesPlugin {
       throw new Error('[Hades] No context or proxyNode specified for DragAndScroll plugin');
     }
 
+    if (this.#eventNode === node) {
+      return;
+    }
+    this.detach();
     this.#eventNode = node;
+    if (!isWindow(node)) {
+      this.#originalCursor = node.style.cursor;
+    }
 
     if (isWindow(node)) {
       this.#options.changeCursor = false;
@@ -72,6 +81,10 @@ class DragAndScroll implements HadesPlugin {
     node.removeEventListener('pointercancel', this.#pointerUpHandler);
     node.removeEventListener('dragstart', this.#dragStartHandler);
     this.#endDrag();
+    if (!isWindow(node) && this.#options.changeCursor) {
+      node.style.cursor = this.#originalCursor;
+    }
+    this.#eventNode = null;
   }
 
   // Text selection is disabled only for the duration of a drag: preventing the
@@ -90,6 +103,15 @@ class DragAndScroll implements HadesPlugin {
       return;
     }
     this.#isDragging = false;
+    if (
+      this.#pointerId !== null &&
+      this.#eventNode &&
+      !isWindow(this.#eventNode) &&
+      this.#eventNode.hasPointerCapture(this.#pointerId)
+    ) {
+      this.#eventNode.releasePointerCapture(this.#pointerId);
+    }
+    this.#pointerId = null;
     if (this.#eventNode && !isWindow(this.#eventNode)) {
       this.#eventNode.style.userSelect = this.#userSelect;
     }
@@ -120,13 +142,18 @@ class DragAndScroll implements HadesPlugin {
     if (this.#isContextPaused || event.pointerType !== 'mouse' || event.button !== 0) {
       return;
     }
+    this.#pointerId = event.pointerId;
     this.#prevPoint = { x: event.clientX, y: event.clientY };
     this.#capture(event, true);
     this.#startDrag();
   }
 
   #pointerMove(event: PointerEvent): void {
-    if (this.#isContextPaused || event.pointerType !== 'mouse') {
+    if (
+      this.#isContextPaused ||
+      event.pointerType !== 'mouse' ||
+      (this.#isDragging && event.pointerId !== this.#pointerId)
+    ) {
       return;
     }
     const point: Vec2 = { x: event.clientX, y: event.clientY };
@@ -155,7 +182,7 @@ class DragAndScroll implements HadesPlugin {
   }
 
   #pointerUp(event: PointerEvent): void {
-    if (event.pointerType !== 'mouse' || !this.#isDragging) {
+    if (event.pointerType !== 'mouse' || !this.#isDragging || event.pointerId !== this.#pointerId) {
       return;
     }
     this.#capture(event, false);
@@ -175,6 +202,7 @@ class DragAndScroll implements HadesPlugin {
     // Always detach: removeEventListener is a no-op when nothing was attached,
     // and skipping it leaked listeners when attach() was called manually.
     this.detach();
+    this.#context = null;
   }
 
   get #isContextPaused(): boolean {

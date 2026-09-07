@@ -36,7 +36,8 @@ const style: string = `
   height: 100%;
 }
 [data-scrollbar].show,
-[data-scrollbar]:hover {
+[data-scrollbar]:hover,
+[data-scrollbar]:focus-visible {
   opacity: 1;
   transition-delay: 0s;
 }

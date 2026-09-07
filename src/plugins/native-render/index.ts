@@ -1,6 +1,6 @@
+import { defaultWindow, getScrollPosition } from '../../utils.ts';
 import { type HadesPlugin, type Vec2 } from '../../types.ts';
 import type Hades from '../../index.ts';
-import { getScrollPosition } from '../../utils.ts';
 import { type NativeRenderOptions } from './types.ts';
 
 class NativeRender implements HadesPlugin {
@@ -14,7 +14,7 @@ class NativeRender implements HadesPlugin {
 
   constructor(options: Partial<NativeRenderOptions> = {}) {
     const defaults: NativeRenderOptions = {
-      scrollNode: typeof window !== 'undefined' ? window : ({} as Window),
+      scrollNode: options.scrollNode ?? defaultWindow(),
     };
     this.#options = { ...defaults, ...options };
     this.#nativeScrollHandler = (e: Event): void => this.#nativeScroll(e);
@@ -26,6 +26,8 @@ class NativeRender implements HadesPlugin {
 
   public register(context: Hades): void {
     this.#context = context;
+    this.#native = getScrollPosition(this.#options.scrollNode);
+    context.scrollTo(this.#native, 0, true);
   }
 
   public render(context: Hades): void {
@@ -55,6 +57,7 @@ class NativeRender implements HadesPlugin {
   }
 
   public destroy(): void {
+    this.#context = null;
     if (typeof window !== 'undefined') {
       this.#options.scrollNode.removeEventListener('scroll', this.#nativeScrollHandler);
     }

@@ -1,10 +1,14 @@
+import { defaultWindow, getScrollPosition } from '../../utils.ts';
 import { type HadesPlugin, type Vec2 } from '../../types.ts';
 import type Hades from '../../index.ts';
-import { getScrollPosition } from '../../utils.ts';
 import { type StartStopOptions } from './types.ts';
 
 class StartStop implements HadesPlugin {
   #still = false;
+  #nativeMoved = false;
+  #onNativeScroll = (): void => {
+    this.#nativeMoved = true;
+  };
   #prev: Vec2 = { x: 0, y: 0 };
   #prevTs = 0;
   #options: StartStopOptions;
@@ -20,9 +24,13 @@ class StartStop implements HadesPlugin {
 
   public name = 'StartStop';
 
-  constructor(options: Partial<StartStopOptions> = {}) {
+  constructor(
+    options: Omit<Partial<StartStopOptions>, 'callbacks'> & {
+      callbacks?: Partial<StartStopOptions['callbacks']>;
+    } = {},
+  ) {
     const defaults: StartStopOptions = {
-      scrollNode: typeof window !== 'undefined' ? window : ({} as Window),
+      scrollNode: options.scrollNode ?? defaultWindow(),
       emitGlobal: false,
       callbacks: {
         start: () => {},
@@ -37,6 +45,8 @@ class StartStop implements HadesPlugin {
       callbacks: { ...defaults.callbacks, ...options.callbacks },
     };
 
+    this.#prev = getScrollPosition(this.#options.scrollNode);
+    this.#options.scrollNode.addEventListener?.('scroll', this.#onNativeScroll, { passive: true });
     if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
       this.#pointerFineMQL = window.matchMedia('(pointer: fine)');
       this.#pointerFine = this.#pointerFineMQL.matches;
@@ -62,7 +72,10 @@ class StartStop implements HadesPlugin {
       return;
     }
     const current = getScrollPosition(this.#options.scrollNode);
-    this.#check(current.x - this.#prev.x, current.y - this.#prev.y);
+    const x = current.x - this.#prev.x;
+    const y = current.y - this.#prev.y;
+    this.#check(x || (this.#nativeMoved ? 1 : 0), y);
+    this.#nativeMoved = false;
     this.#prev = current;
     this.#prevTs = ts;
   }
@@ -94,6 +107,7 @@ class StartStop implements HadesPlugin {
   }
 
   public destroy(): void {
+    this.#options.scrollNode.removeEventListener?.('scroll', this.#onNativeScroll);
     if (this.#pointerFineMQL !== null) {
       this.#pointerFineMQL.removeEventListener('change', this.#onPointerChange);
       this.#pointerFineMQL = null;

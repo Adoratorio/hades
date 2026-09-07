@@ -1,7 +1,7 @@
+import { defaultWindow, getScrollPosition, canScrollWithin } from '../../utils.ts';
 import Boundaries from '../../Boundaries.ts';
 import { type HadesPlugin, type HermesEvent, type Vec2 } from '../../types.ts';
 import type Hades from '../../index.ts';
-import { getScrollPosition, isScrollableElement } from '../../utils.ts';
 import { type LenisRenderOptions } from './types.ts';
 
 class LenisRender implements HadesPlugin {
@@ -10,6 +10,9 @@ class LenisRender implements HadesPlugin {
   #nativeScrollHandler: (event: Event) => void;
   #boundHandler: () => void;
   #resizeObserver: ResizeObserver | null = null;
+  #observed = new Set<Element>();
+  #dirty = true;
+  #mutationObserver: MutationObserver | null = null;
   #bound: Vec2 = { x: 0, y: 0 };
   #isValidEvent = false;
   #interval: number | null = null;
@@ -18,13 +21,15 @@ class LenisRender implements HadesPlugin {
 
   constructor(options: Partial<LenisRenderOptions> = {}) {
     const defaults: LenisRenderOptions = {
-      scrollNode: typeof window !== 'undefined' ? window : ({} as Window),
+      scrollNode: options.scrollNode ?? defaultWindow(),
       renderScroll: true,
     };
     this.#options = { ...defaults, ...options };
 
     this.#nativeScrollHandler = (e: Event): void => this.#nativeScroll(e);
-    this.#boundHandler = (): void => this.#computeBound();
+    this.#boundHandler = (): void => {
+      this.#dirty = true;
+    };
 
     if (typeof this.#options.scrollNode === 'undefined') {
       throw new Error('[Hades] Invalid Scroll Node for Lenis Renderer');
@@ -40,18 +45,28 @@ class LenisRender implements HadesPlugin {
         this.#resizeObserver = new ResizeObserver(this.#boundHandler);
         this.#resizeObserver.observe(measureNode);
       }
+      if (typeof MutationObserver !== 'undefined' && measureNode) {
+        this.#mutationObserver = new MutationObserver(this.#boundHandler);
+        this.#mutationObserver.observe(measureNode, {
+          childList: true,
+          subtree: true,
+          characterData: true,
+        });
+      }
       this.#computeBound();
     }
   }
 
   public register(context: Hades): void {
     this.#context = context;
+    context.scrollTo(getScrollPosition(this.#options.scrollNode), 0, true);
   }
 
   public wheel(_context: Hades, event: HermesEvent): boolean {
     if (
-      (event.originalEvent.target as HTMLElement).parentNode !== this.#options.scrollNode &&
-      isScrollableElement(event.originalEvent.target as HTMLElement)
+      event.originalEvent.defaultPrevented ||
+      (event.originalEvent instanceof WheelEvent && event.originalEvent.ctrlKey) ||
+      canScrollWithin(event.originalEvent, this.#options.scrollNode, event.delta)
     ) {
       return true;
     }
@@ -64,6 +79,16 @@ class LenisRender implements HadesPlugin {
     }
 
     return false;
+  }
+
+  public preFrame(): void {
+    if (this.#dirty) {
+      this.#computeBound();
+    }
+  }
+
+  public recalculate(): void {
+    this.#computeBound();
   }
 
   public render(context: Hades): void {
@@ -88,13 +113,40 @@ class LenisRender implements HadesPlugin {
       return;
     }
     const isWindow = this.#options.scrollNode === window;
+    const documentRoot = document.documentElement;
     this.#bound = {
-      x: node.scrollWidth - (isWindow ? window.innerWidth : node.clientWidth),
-      y: node.scrollHeight - (isWindow ? window.innerHeight : node.clientHeight),
+      x: Math.max(
+        0,
+        (isWindow ? Math.max(node.scrollWidth, documentRoot.scrollWidth) : node.scrollWidth) -
+          (isWindow ? window.innerWidth : node.clientWidth),
+      ),
+      y: Math.max(
+        0,
+        (isWindow ? Math.max(node.scrollHeight, documentRoot.scrollHeight) : node.scrollHeight) -
+          (isWindow ? window.innerHeight : node.clientHeight),
+      ),
     };
+    this.#dirty = false;
+    if (this.#resizeObserver) {
+      const current = new Set<Element>([node, ...node.children]);
+      for (const previous of this.#observed) {
+        if (!current.has(previous)) {
+          this.#resizeObserver.unobserve(previous);
+        }
+      }
+      for (const child of current) {
+        if (!this.#observed.has(child)) {
+          this.#resizeObserver.observe(child);
+        }
+      }
+      this.#observed = current;
+    }
   }
 
   public scroll(context: Hades, _event: HermesEvent): void {
+    if (this.#dirty) {
+      this.#computeBound();
+    }
     context.internalTemp = {
       x: Math.min(Math.max(context.internalTemp.x, 0), this.#bound.x),
       y: Math.min(Math.max(context.internalTemp.y, 0), this.#bound.y),
@@ -116,11 +168,26 @@ class LenisRender implements HadesPlugin {
     }
   }
 
-  public scrollTo(): void {
+  public scrollTo(context: Hades | null = this.#context): void {
+    this.#isValidEvent = true;
+    if (!context) {
+      return;
+    }
+    if (this.#dirty) {
+      this.#computeBound();
+    }
+    context.internalAmount = {
+      x: Math.min(Math.max(context.internalAmount.x, 0), this.#bound.x),
+      y: Math.min(Math.max(context.internalAmount.y, 0), this.#bound.y),
+    };
     this.#isValidEvent = true;
   }
 
   public destroy(): void {
+    this.#mutationObserver?.disconnect();
+    this.#mutationObserver = null;
+    this.#observed.clear();
+    this.#context = null;
     if (typeof window !== 'undefined') {
       if (this.#interval) {
         window.clearTimeout(this.#interval);
@@ -143,8 +210,8 @@ class LenisRender implements HadesPlugin {
   }
 
   public swapScrollNode(node: HTMLElement | Window): void {
-    node.addEventListener('scroll', this.#nativeScrollHandler);
     this.#options.scrollNode.removeEventListener('scroll', this.#nativeScrollHandler);
+    node.addEventListener('scroll', this.#nativeScrollHandler);
     this.#options.scrollNode = node;
     if (this.#resizeObserver !== null) {
       this.#resizeObserver.disconnect();
@@ -153,25 +220,34 @@ class LenisRender implements HadesPlugin {
         this.#resizeObserver.observe(measureNode);
       }
     }
+    this.#mutationObserver?.disconnect();
+    const measure = this.#getMeasureNode();
+    if (measure) {
+      this.#mutationObserver?.observe(measure, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    }
+    this.#observed.clear();
+    this.#isValidEvent = false;
+    if (this.#interval !== null) {
+      window.clearTimeout(this.#interval);
+      this.#interval = null;
+    }
     this.#computeBound();
+    this.#context?.scrollTo(getScrollPosition(node), 0, true);
+  }
+
+  public get scrollNode(): HTMLElement | Window {
+    return this.#options.scrollNode;
   }
 
   public get boundaries(): Boundaries {
-    if (typeof window !== 'undefined' && this.#options.scrollNode === window) {
-      return new Boundaries(
-        0,
-        document.body.scrollWidth - document.body.clientWidth,
-        0,
-        document.body.scrollHeight - document.body.clientHeight,
-      );
+    if (this.#dirty) {
+      this.#computeBound();
     }
-    const node = this.#options.scrollNode as HTMLElement;
-    return new Boundaries(
-      0,
-      node.scrollWidth ? node.scrollWidth - node.clientWidth : 0,
-      0,
-      node.scrollHeight ? node.scrollHeight - node.clientHeight : 0,
-    );
+    return new Boundaries(0, this.#bound.x, 0, this.#bound.y);
   }
 }
 

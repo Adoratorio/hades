@@ -17,6 +17,8 @@ export interface Track {
   max: number;
   ratio: number;
   shown: boolean;
+  // Last rendered translation, invalidated by dimension changes too.
+  translation?: number;
 }
 
 export interface ScrollbarsOptions {
