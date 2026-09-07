@@ -31,8 +31,9 @@
     "lint:fix": "oxlint --fix src",
     "format": "oxfmt src",
     "format:check": "oxfmt --check src",
+    "test": "vitest run",
     "check": "pnpm run typecheck && pnpm run lint && pnpm run format:check",
-    "prepublishOnly": "pnpm run check && pnpm run build"
+    "prepublishOnly": "pnpm run check && pnpm run test && pnpm run build"
   },
   "keywords": [
     "scroll",
@@ -58,14 +59,16 @@
     "url": "https://github.com/Adoratorio/hades/issues"
   },
   "homepage": "https://github.com/Adoratorio/hades#readme",
-  "packageManager": "pnpm@11.12.0",
+  "packageManager": "pnpm@11.22.0",
   "dependencies": {
     "@adoratorio/aion": "^1.0.0",
     "@adoratorio/hermes": "^2.0.0"
   },
   "devDependencies": {
+    "happy-dom": "^20.14.0",
     "oxfmt": "^0.59.0",
     "oxlint": "^1.74.0",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0"
   }
 }

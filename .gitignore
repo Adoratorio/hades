@@ -18,3 +18,6 @@ coverage
 # Lockfiles from other package managers
 package-lock.json
 yarn.lock
+
+# Local dev only: link overrides to sibling packages
+pnpm-workspace.yaml
