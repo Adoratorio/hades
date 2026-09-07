@@ -55,7 +55,7 @@
     "Daniele Borra <daniele@adoratorio.com>",
     "Tommaso Algozzino <tommaso@adoratorio.com>",
     "Luca Bortolussi <luca@adoratorio.com>",
-    "Dar\u00edo Here\u00f1\u00fa"
+    "Darío Hereñú"
   ],
   "license": "MIT",
   "repository": {
@@ -68,13 +68,14 @@
   "homepage": "https://github.com/Adoratorio/hades#readme",
   "packageManager": "pnpm@11.22.0",
   "dependencies": {
-    "@adoratorio/aion": "^1.0.0",
+    "@adoratorio/aion": "^1.0.1",
     "@adoratorio/hermes": "^2.0.0"
   },
   "devDependencies": {
     "happy-dom": "^20.14.0",
     "oxfmt": "^0.59.0",
     "oxlint": "^1.74.0",
+    "playwright": "^1.63.0",
     "typescript": "^7.0.2",
     "vitest": "^5.0.0"
   }

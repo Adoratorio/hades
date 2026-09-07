@@ -2,7 +2,7 @@
 
 ## 2.0.0
 
-- ESM-only, TypeScript 7 toolchain, `debug` option, unified `[Hades]` errors; requires `@adoratorio/aion` ^1 and `@adoratorio/hermes` ^2.
+- ESM-only, TypeScript 7 toolchain, `debug` option, unified `[Hades]` errors; requires `@adoratorio/aion` ^1.0.1 and `@adoratorio/hermes` ^2.0.0.
 - The frame delta is clamped to the active duration (no overshoot on short `scrollTo`); the smoothing settles once closer than 0.01px, so `still` and StartStop follow the visual stop.
 - Starting from still is not a direction change; user input during a `scrollTo` continues from the rendered position.
 - The `easing` setter applies the new duration; nested options are merged; plugin names must be unique; `destroy()` clears plugins.
