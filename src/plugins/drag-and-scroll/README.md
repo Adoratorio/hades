@@ -29,7 +29,7 @@ hades.registerPlugin(
 
 ### attach()
 
-Attach mouse events to the proxyNode or to the default context (`Hades`) root node. Works only on non-touch enabled devices.
+Attach pointer listeners to `proxyNode` or the registered Hades root. Only mouse pointers start dragging, including on devices that also support touch. Without an explicit proxy node, register the plugin before calling `attach()`.
 
 ```typescript
 DragAndScrollInstance.attach();
@@ -42,3 +42,9 @@ Detach all the previously attached events.
 ```typescript
 DragAndScrollInstance.detach();
 ```
+
+### play(), pause() and destroy()
+
+`play()` updates the cursor to its ready state when cursor changes are enabled; `pause()` ends an active drag and resets the cursor. They do not attach or detach listeners. Hades calls these hooks when its own `play()` and `pause()` methods run, and dragging checks whether Hades is running. Use `attach()` and `detach()` to manage listeners explicitly. `destroy()` detaches listeners and clears the context. All these methods, along with `register(context)`, return `void`.
+
+With `proxyNode: window`, cursor style changes are disabled because the proxy has no element style. `smooth: false` synchronizes the rendered amount immediately; `smooth: true` retains Hades easing.

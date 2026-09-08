@@ -22,7 +22,7 @@ const hades = new Hades({
 });
 
 hades.registerPlugin(new VirtualRender({
-  scrollNode: document.querySelector('.container')
+  scrollNode: document.querySelector<HTMLElement>('.container') ?? document.body
 }));
 ```
 
@@ -34,7 +34,8 @@ Internally, Hades uses `@adoratorio/hermes` for scroll event normalization and `
 | :-------- | :--: | :-----: | :---------- |
 | `root` | `HTMLElement \| Window` | `document.body` | The DOM element or window on which the event listeners will be attached. |
 | `easing` | `Easing` | `{ duration: 1000, mode: Hades.EASING.LINEAR }` | Easing configuration for inertia. Each frame the position moves towards the target by the curve evaluated at `delta / duration`, and settles once closer than 0.01px. |
-| `autoplay` | `boolean` | `true` | Autostart the rendering cycle. |
+| `autoplay` | `boolean` | `true` | Enable input handling through `play()` on construction. |
+| `aion` | `Aion \| null` | `null` | Share an Aion engine, or create one internally. Hades starts either engine and removes only its own handler on destruction. |
 | `touchMultiplier` | `number` | `1.5` | Multiplier for calculating the delta of touches. |
 | `smoothDirectionChange`| `boolean` | `false` | Retains easing when changing scroll direction to feel more inertia. When `false` the pending momentum is dropped on an up/down reversal (starting from still is not a reversal). |
 | `globalMultiplier` | `number` | `1` | Multiplier used to scale the event delta for all events. |
@@ -42,6 +43,9 @@ Internally, Hades uses `@adoratorio/hermes` for scroll event normalization and `
 | `invert` | `boolean` | `false` | Inverts x and y delta values. |
 | `precision` | `number` | `4` | Decimal digits used to round computed velocity and rendered values. |
 | `debug` | `boolean` | `false` | Enable namespaced `console.warn` diagnostics for recoverable issues (contract violations always throw). Forwarded to the internal `Hermes` and `Aion`. |
+| `respectReducedMotion` | `boolean` | Disabled when omitted | Use immediate movement while the system requests reduced motion. |
+
+All constructor options are optional. `easing` and `threshold` accept partial objects. `autoplay` controls input handling through `play()`; the shared frame engine is started even when `autoplay` is false.
 
 ### Easing Functions
 A set of ready-made easing functions is exposed as `Hades.EASING`.
@@ -55,7 +59,7 @@ A set of ready-made easing functions is exposed as `Hades.EASING`.
 
 ### Scroll & Lifecycle
 
-```typescript
+```text
 // Scroll immediately or smoothly to a specific position. Any user input
 // interrupts a smooth scrollTo and continues from the rendered position.
 hades.scrollTo(position: Partial<Vec2>, duration: number, prevent?: boolean)
@@ -68,9 +72,13 @@ hades.pause()
 hades.destroy()
 ```
 
-### Plugin Management
+### Scroll parameters
 
-```typescript
+`scrollTo(position, duration, prevent = false)` takes pixels and milliseconds. Supply either axis or both; omitted axes keep their current targets. A duration of zero or less requests immediate movement. Position values and duration must be finite. The third argument skips plugin `scrollTo` hooks when true; it does not prevent browser events. `play()`, `pause()`, `scrollTo()` and `destroy()` return `void`.
+
+### Registering plugins
+
+```text
 // Plugin names must be unique per instance
 hades.registerPlugin(plugin: HadesPlugin, id?: string): string
 hades.registerPlugins(plugins: HadesPlugin[], ids?: string[]): string[]
@@ -93,7 +101,31 @@ hades.amount     // rendered position (Vec2)
 hades.velocity   // px per ms (Vec2)
 hades.direction  // Hades.DIRECTION.UP | DOWN | INITIAL per axis
 hades.still      // true once the scroll has settled
+hades.running   // whether input handling is enabled by play()/pause()
+hades.root      // resolved listener root (read-only)
 ```
+
+`direction` is a `Vec2` whose axes use `Hades.DIRECTION.UP` (`1`), `DOWN` (`-1`) or `INITIAL` (`0`). `easing` also accepts a partial update such as `hades.easing = { duration: 600 }`. `internalAmount` and `internalTemp` are get/set `Vec2` properties used by renderer plugins to synchronize target and temporary input positions; normal integrations should use `scrollTo()`.
+
+### Custom plugins
+
+`getPlugin<T>(name)` looks up a plugin by name; `unregisterPlugin(id)` uses its assigned ID, runs its `destroy()` hook and returns `false` if absent. `registerPlugins(plugins, ids = [])` registers in array order. Missing IDs are generated. `getRenderer()` returns the first registered built-in renderer by name, or `undefined`.
+
+`HadesPlugin` requires `name` and accepts an assigned `id`. Its optional hooks are:
+
+| Hook | Arguments | When it runs |
+| :--- | :-------- | :----------- |
+| `register` | `context: Hades` | Registration. |
+| `wheel` | `context, event: HermesEvent` | Input interception; returning true causes Hades to skip its normal processing of that event. |
+| `preScroll` | `context, event: HermesEvent` | Before applying accepted input to the scroll target. |
+| `scroll` | `context, event: HermesEvent` | After updating the input target. |
+| `preFrame` | `context` | Before frame motion is calculated. |
+| `render` | `context` | After frame motion is calculated. |
+| `scrollTo` | `context, position: Partial<Vec2>, duration: number` | Programmatic scrolling, unless `prevent` is true. |
+| `play`, `pause` | `context` | Input handling is enabled or disabled. |
+| `destroy` | None | Unregistration or instance destruction. |
+
+Hooks run in registration order within each phase. Frame hooks continue while the instance is still or input handling is paused. See the [plugin contract](src/types.ts) for complete types, including `BoundedRenderer` for renderers exposing `boundaries`.
 
 ## Shipped Plugins
 
@@ -114,7 +146,14 @@ Hades needs `window` and `document`; instantiating it outside of a browser envir
 
 ## TypeScript Support
 
-Fully typed. Exported interfaces include `HadesOptions`, `HadesPlugin`, `Vec2`, and `Boundaries`.
+Exported types include `HadesOptions`, `HadesInputOptions`, `HadesPlugin`, `BoundedRenderer`, `Bounds`, `Easing`, `HermesEvent`, `Timeline`, `Aion` and `Vec2`. `Boundaries` is an exported class:
+
+```typescript
+import { Boundaries } from '@adoratorio/hades';
+
+const bounds = new Boundaries(0, 0, 0, 1200); // xMin, xMax, yMin, yMax
+console.log(bounds.min, bounds.max);
+```
 
 ## Compatibility
 

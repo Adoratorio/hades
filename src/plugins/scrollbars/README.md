@@ -17,8 +17,14 @@ import { Scrollbars } from '@adoratorio/hades/plugins';
 
 hades.registerPlugin(
   new Scrollbars({
-    viewport: document.querySelector('#app'),
+    viewport: document.querySelector<HTMLElement>('#app') ?? document.documentElement,
     tracks: ['x', 'y'],
   }),
 );
 ```
+
+## Keyboard and lifecycle
+
+Thumbs support arrow keys, PageUp/PageDown and Home/End. `TRACK.X` and `TRACK.Y` are exported from `@adoratorio/hades/plugins` as alternatives to the strings `'x'` and `'y'`.
+
+Hades invokes `register(context)`, `preFrame()` and `render()` automatically. `destroy()` removes the generated tracks and listeners and returns `void`. Remove the plugin through `hades.unregisterPlugin(id)` to also stop its frame hooks.
