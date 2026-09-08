@@ -35,3 +35,9 @@ hades.registerPlugin(
 • Type `boolean`
 
 Returns `true` when the scroll is settled (not currently moving).
+
+## Callbacks and lifecycle
+
+`callbacks.start` and `callbacks.stop` each receive the `StartStop` instance: `(instance: StartStop) => void`. Either callback may be omitted; missing callbacks use no-op functions. The read-only `still` getter exposes current state.
+
+With `emitGlobal: true`, `hades-start` and `hades-stop` are dispatched on `window` after the matching callback. These events carry no custom payload. Hades invokes `render(context)` each frame. `destroy()` removes scroll and media-query listeners and returns `void`; unregister the plugin through Hades to stop frame callbacks too.

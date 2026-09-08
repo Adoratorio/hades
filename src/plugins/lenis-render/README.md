@@ -45,5 +45,16 @@ lenisRenderInstance.stopRender();
 Swap the DOM element (or `window`) the renderer drives at runtime, e.g. after a client-side route change. Re-binds the native `scroll` listener and the `ResizeObserver` to the new node and recomputes the boundaries.
 
 ```typescript
-lenisRenderInstance.swapScrollNode(document.querySelector('.new-container'));
+const node = document.querySelector<HTMLElement>('.new-container');
+if (node) lenisRenderInstance.swapScrollNode(node);
 ```
+
+### recalculate()
+
+Call `lenisRenderInstance.recalculate()` to refresh cached bounds immediately after layout changes that are not reported by the observers.
+
+## State and lifecycle
+
+`scrollNode` is a read-only `HTMLElement | Window`; use `swapScrollNode(node)` to change it. `boundaries` is a read-only `Boundaries` object containing `min` and `max` vectors. `startRender()`, `stopRender()`, `swapScrollNode(node)`, `recalculate()` and `destroy()` return `void`.
+
+Hades calls `register(context)`, `wheel(context, event)`, `preFrame()`, `render(context)`, `scroll(context, event)` and `scrollTo(context)` as lifecycle hooks. `scrollTo()` defaults to the registered context when called directly. Use `hades.scrollTo()` for normal programmatic scrolling. `destroy()` removes native listeners and observers; unregister the plugin through Hades to remove it from the frame loop.

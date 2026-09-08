@@ -6,6 +6,8 @@ This file records changes from 2.0.0 onward. See [GitHub releases](https://githu
 
 ### Documentation
 
+- Document shared engines, scroll parameters, plugin hooks and missing renderer methods and state.
+
 - Refine contributor guidance and release notes; consolidate maintainer contacts in the README.
 
 ## [2.0.0](https://github.com/Adoratorio/hades/releases/tag/v2.0.0) — 2026-09-08

@@ -22,7 +22,7 @@ import { VirtualRender } from '@adoratorio/hades/plugins';
 
 hades.registerPlugin(
   new VirtualRender({
-    scrollNode: document.querySelector('.container'),
+    scrollNode: document.querySelector<HTMLElement>('.container') ?? document.body,
   }),
 );
 ```
@@ -66,3 +66,21 @@ Update the `infiniteScroll` option.
 • Type `Boundaries`
 
 Update the `boundaries` option.
+
+#### scrollNode
+
+Read-only `HTMLElement`: the element whose transform is rendered. `infiniteScroll` and `boundaries` both support reading and writing. For fixed custom bounds, use `autoBoundaries: false`; otherwise automatic measurements can replace your values.
+
+```typescript
+import { Boundaries } from '@adoratorio/hades';
+
+const renderer = new VirtualRender({
+  scrollNode: document.body,
+  autoBoundaries: false,
+  boundaries: new Boundaries(0, 0, 0, 1200),
+});
+```
+
+## Lifecycle
+
+`startRender()`, `stopRender()` and `destroy()` return `void`. Hades invokes `register(context)`, `preFrame(context)`, `render(context)`, `scroll(context)` and `scrollTo(context)` automatically. `destroy()` releases resize tracking and restores styles still owned by the renderer. Remove registered plugins through `hades.unregisterPlugin(id)`.
