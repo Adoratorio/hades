@@ -1,38 +1,66 @@
-# Contributing
+# Contributing to Hades
 
-Use the pnpm version in package.json and Node 24 (the CI runtime).
-Run `pnpm install --frozen-lockfile`, `pnpm check`, `pnpm test` and `pnpm build`.
-`pnpm format` applies the shared style. Typechecking includes the tests.
+Bug reports, documentation improvements and focused pull requests are welcome.
+For a new feature or a public API change, open an issue first to discuss the use case.
 
-Keep classes, public exports (including dist subpaths), callback order and
-existing defaults compatible. Reproduce a bug with a focused test before
-fixing it. Destroy test instances and restore mocks after every test.
-Changes to animation feel, input sensitivity or continuous plugin callbacks
-need explicit opt-in or a planned breaking release.
+## Report an issue
 
-Validate browser behavior with real layout, nested containers, keyboard input,
-reduced motion, dynamic content and repeated mount/destroy cycles. Simulated
-DOM tests cannot establish browser rendering or touch-device compatibility.
-Keep import-time code safe in SSR; construct DOM plugins in a client-only hook.
+Use [GitHub Issues](https://github.com/Adoratorio/hades/issues). Include the package version,
+your runtime or browser, a minimal reproduction, and the expected and actual behavior.
 
-Run `pnpm test:package` after building to install the actual archive in a
-fresh temporary consumer and verify its exports and TypeScript declarations.
-For unpublished dependencies, pass their built repository directories as
-arguments: `pnpm test:package ../aion ../hermes` (only those actually needed).
-The script packs dependencies; it never publishes them.
+## Local development
 
-Record user-visible changes under Unreleased in CHANGELOG.md. Require review
-from a different current maintainer. Agree on versions, tags, push and npm
-publication separately; no local check publishes or pushes anything.
-For dependent packages, publish and verify their required dependency versions
-first. Prefer npm trusted publishing when the release workflow is configured.
+Clone your fork and use Node.js 24 with the pnpm version declared in `package.json`.
+From the repository root, run:
 
-## Real browser smoke tests
+```sh
+pnpm install --frozen-lockfile --trust-lockfile
+pnpm check
+pnpm test
+pnpm build
+pnpm test:package
+```
 
-After building, run `pnpm test:browser` with Playwright available. You can use
-an existing installation through `PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs`.
-Set `BROWSER=chromium`, `firefox` or `webkit` and install that browser with Playwright.
-`BROWSER_CHANNEL=chrome` uses an installed Chrome. No user profile is used.
-The test uses real browser layout with deterministic animation stepping. It
-is not a substitute for physical touch-device testing. Apollo also reports
-current frame-cost samples; it does not assert an unmeasured speedup.
+`pnpm check` runs typechecking, linting and formatting checks. Use `pnpm format`
+to apply formatting. `pnpm test:package` installs the built archive in a temporary
+consumer project and checks imports, declarations and source maps.
+
+## Scope and validation
+
+Keep changes focused. Add a regression test for bug fixes and update examples when
+the public API changes. Preserve public exports, including supported `dist` subpaths.
+
+Cover scrolling boundaries, interrupted movement, nested scrollers, renderer changes and plugin teardown. Check keyboard input, browser zoom, reduced motion, resize and repeated mount/destroy cycles. Preserve the default scrolling feel and continuous plugin callbacks; changes to these defaults require an agreed breaking release.
+
+To test unpublished dependency changes, build those repositories first, then run
+`pnpm test:package ../aion ../hermes` with paths to your local checkouts.
+
+### Browser checks
+
+After building, run `pnpm test:browser` with Playwright and its browser installed.
+The default browser is Chromium. Set `BROWSER=firefox` or `BROWSER=webkit` to use
+another installed browser, or `BROWSER_CHANNEL=chrome` for an installed Chrome.
+An existing Playwright installation can be selected with
+`PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs`.
+
+These checks use real browser layout. Changes to touch behavior also need testing
+on a physical device. Browser checks are separate from the default CI job.
+
+## Pull requests
+
+Describe the problem, the resulting behavior and how you verified it. Include any
+compatibility impact and add user-facing changes to `Unreleased` in `CHANGELOG.md`.
+A current maintainer other than the author should review each change; maintainers
+are listed in the [README](README.md#maintainers).
+
+## Releases
+
+Maintainers coordinate the version and release owner. Before publishing, run the
+checks above, confirm dependency versions are available, and move the relevant
+`Unreleased` notes into a dated version entry.
+
+Release notes should explain the user impact, identify breaking changes and give
+concrete upgrade steps. Keep titles and headings plain, without emoji. Use the
+changelog as the source for release notes and link to the relevant comparison.
+
+CI validates changes; publishing is a separate maintainer operation.
