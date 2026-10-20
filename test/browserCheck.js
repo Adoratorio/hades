@@ -25,6 +25,8 @@ function assert(ok, message) {
   }
 }
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+// Native wheel scrolling may be animated by the browser
+const settle = () => new Promise((resolve) => setTimeout(resolve, 400));
 export async function run() {
   const checks = [];
   document.body.style.margin = '0';
@@ -93,7 +95,36 @@ export async function run() {
   assert(passthrough.amount.y === 250, 'Existing native position not synchronized');
   passthrough.destroy();
   local.remove();
-  content.remove();
   checks.push('restored native position');
+  window.scrollTo(0, 300);
+  const clock4 = engine();
+  const paused = new Hades({ aion: clock4, easing: { duration: 0 } });
+  paused.registerPlugin(new LenisRender());
+  paused.pause();
+  await settle();
+  assert(window.scrollY === 300, 'Pausing moved the page');
+  assert(
+    document.documentElement.classList.contains('hades-paused'),
+    'Paused root has no hades-paused class',
+  );
+  await window.realWheel(500, 350, 0, 400);
+  await settle();
+  assert(window.scrollY === 300, 'Wheel scrolled a paused page');
+  paused.scrollTo({ y: 800 }, 0);
+  clock4.frame();
+  assert(window.scrollY === 800, 'Programmatic scroll did not land while paused');
+  paused.play();
+  assert(document.documentElement.style.overflowY === '', 'Play did not restore the root overflow');
+  const box = document.createElement('div');
+  box.style.cssText = 'height:100px;overflow:auto';
+  paused.getRenderer().swapScrollNode(box);
+  paused.pause();
+  assert(box.style.overflowY === 'hidden', 'Element scroll node was not locked');
+  paused.play();
+  assert(box.style.overflow === 'auto', 'Overflow shorthand was not restored');
+  paused.destroy();
+  window.scrollTo(0, 0);
+  content.remove();
+  checks.push('pause lock keeps the position, blocks the wheel and allows programmatic scroll');
   return { checks };
 }

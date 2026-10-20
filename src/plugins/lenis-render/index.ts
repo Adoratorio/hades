@@ -1,8 +1,17 @@
 import { defaultWindow, getScrollPosition, canScrollWithin } from '../../utils.ts';
 import Boundaries from '../../Boundaries.ts';
-import { type HadesPlugin, type HermesEvent, type Vec2 } from '../../types.ts';
+import { type HadesPlugin, type HermesEvent, type PauseOptions, type Vec2 } from '../../types.ts';
 import type Hades from '../../index.ts';
 import { type LenisRenderOptions } from './types.ts';
+
+const LOCK_PROPERTIES = ['overflow-x', 'overflow-y'] as const;
+const LOCK_CLASS = 'hades-paused';
+
+// A node locked while paused, with the inline declarations to restore on unlock
+interface ScrollLock {
+  node: HTMLElement;
+  saved: { property: string; value: string; priority: string }[];
+}
 
 class LenisRender implements HadesPlugin {
   #context: Hades | null = null;
@@ -16,6 +25,7 @@ class LenisRender implements HadesPlugin {
   #bound: Vec2 = { x: 0, y: 0 };
   #isValidEvent = false;
   #interval: number | null = null;
+  #lock: ScrollLock | null = null;
 
   public name = 'LenisRender';
 
@@ -107,6 +117,53 @@ class LenisRender implements HadesPlugin {
     return this.#options.scrollNode as HTMLElement;
   }
 
+  // The element whose overflow scrolls the node: the root for the window
+  #getLockNode(): HTMLElement | null {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+    if (this.#options.scrollNode === window) {
+      return document.documentElement;
+    }
+    return this.#options.scrollNode as HTMLElement;
+  }
+
+  // Block user scrolling on the scroll node; programmatic scrolling keeps working
+  #lockScroll(): void {
+    const node = this.#getLockNode();
+    if (node === null || this.#lock !== null) {
+      return;
+    }
+    this.#lock = {
+      node,
+      saved: LOCK_PROPERTIES.map((property) => ({
+        property,
+        value: node.style.getPropertyValue(property),
+        priority: node.style.getPropertyPriority(property),
+      })),
+    };
+    for (const property of LOCK_PROPERTIES) {
+      node.style.setProperty(property, 'hidden', 'important');
+    }
+    node.classList.add(LOCK_CLASS);
+  }
+
+  #unlockScroll(): void {
+    if (this.#lock === null) {
+      return;
+    }
+    const { node, saved } = this.#lock;
+    for (const { property, value, priority } of saved) {
+      if (value === '') {
+        node.style.removeProperty(property);
+      } else {
+        node.style.setProperty(property, value, priority);
+      }
+    }
+    node.classList.remove(LOCK_CLASS);
+    this.#lock = null;
+  }
+
   #computeBound(): void {
     const node = this.#getMeasureNode();
     if (node === null) {
@@ -183,7 +240,25 @@ class LenisRender implements HadesPlugin {
     this.#isValidEvent = true;
   }
 
+  public play(): void {
+    this.#unlockScroll();
+  }
+
+  public pause(_context: Hades, options: PauseOptions): void {
+    // Without inertia nothing is left to render: native scroll (focus, anchors)
+    // is synced back right away instead of being overwritten
+    if (!options.inertia) {
+      this.#isValidEvent = false;
+      if (this.#interval !== null) {
+        window.clearTimeout(this.#interval);
+        this.#interval = null;
+      }
+    }
+    this.#lockScroll();
+  }
+
   public destroy(): void {
+    this.#unlockScroll();
     this.#mutationObserver?.disconnect();
     this.#mutationObserver = null;
     this.#observed.clear();
@@ -210,9 +285,15 @@ class LenisRender implements HadesPlugin {
   }
 
   public swapScrollNode(node: HTMLElement | Window): void {
+    // A pause lock moves to the new node
+    const locked = this.#lock !== null;
+    this.#unlockScroll();
     this.#options.scrollNode.removeEventListener('scroll', this.#nativeScrollHandler);
     node.addEventListener('scroll', this.#nativeScrollHandler);
     this.#options.scrollNode = node;
+    if (locked) {
+      this.#lockScroll();
+    }
     if (this.#resizeObserver !== null) {
       this.#resizeObserver.disconnect();
       const measureNode = this.#getMeasureNode();

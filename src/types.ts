@@ -55,6 +55,11 @@ export interface Easing {
   duration: number;
 }
 
+export interface PauseOptions {
+  // Let the pending momentum (or programmatic scroll) finish instead of stopping on the spot
+  inertia: boolean;
+}
+
 export interface HadesPlugin {
   // The plugin id assigned during registration
   id?: string;
@@ -79,7 +84,7 @@ export interface HadesPlugin {
   // Called every time the play method is called on context
   play?: (context: Hades) => void;
   // Same as per play but when the context is paused
-  pause?: (context: Hades) => void;
+  pause?: (context: Hades, options: PauseOptions) => void;
 }
 
 // A renderer plugin exposing the scrollable area (VirtualRender, LenisRender)

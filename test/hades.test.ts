@@ -170,6 +170,72 @@ describe('Hades plugins', () => {
   });
 });
 
+describe('Hades pause', () => {
+  it('drops the pending wheel momentum by default', () => {
+    const hades = createHades({ aion, easing: { mode: EASING.LINEAR, duration: 100 } });
+    wheel(100);
+    aion.frame(50);
+    expect(hades.amount.y).toBe(50);
+
+    hades.pause();
+    for (let i = 0; i < 60; i++) {
+      aion.frame(16);
+    }
+    expect(hades.amount.y).toBe(50);
+    expect(hades.still).toBe(true);
+  });
+
+  it('lets the pending wheel momentum finish with inertia', () => {
+    const hades = createHades({ aion, easing: { mode: EASING.LINEAR, duration: 100 } });
+    wheel(100);
+    aion.frame(50);
+
+    hades.pause({ inertia: true });
+    for (let i = 0; i < 60; i++) {
+      aion.frame(16);
+    }
+    expect(hades.amount.y).toBe(100);
+  });
+
+  it('stops a programmatic scroll in progress', () => {
+    const hades = createHades({ aion, easing: { mode: EASING.LINEAR, duration: 100 } });
+    hades.scrollTo({ y: 500 }, 1000);
+    aion.frame(100);
+    const reached = hades.amount.y;
+    expect(reached).toBeGreaterThan(0);
+
+    hades.pause();
+    for (let i = 0; i < 60; i++) {
+      aion.frame(100);
+    }
+    expect(hades.amount.y).toBe(reached);
+  });
+
+  it('ignores input but still runs a programmatic scroll while paused', () => {
+    const hades = createHades({ aion, easing: { mode: EASING.LINEAR, duration: 100 } });
+    hades.pause();
+    wheel(100);
+    expect(hades.internalAmount.y).toBe(0);
+
+    hades.scrollTo({ y: 300 }, 100);
+    for (let i = 0; i < 60; i++) {
+      aion.frame(16);
+    }
+    expect(hades.amount.y).toBe(300);
+  });
+
+  it('hands the resolved options to plugin pause hooks', () => {
+    const hades = createHades({ aion });
+    const plugin = { name: 'probe', pause: vi.fn() };
+    hades.registerPlugin(plugin);
+
+    hades.pause();
+    expect(plugin.pause).toHaveBeenLastCalledWith(hades, { inertia: false });
+    hades.pause({ inertia: true });
+    expect(plugin.pause).toHaveBeenLastCalledWith(hades, { inertia: true });
+  });
+});
+
 describe('Hades input validation and motion preference', () => {
   it('validates easing changes and resolves an immediate scroll followed by a smooth scroll', () => {
     const h = createHades({ aion });

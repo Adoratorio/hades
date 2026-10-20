@@ -8,6 +8,7 @@ import {
   type HadesInputOptions,
   type HadesPlugin,
   type HermesEvent,
+  type PauseOptions,
   type Timeline,
   type Vec2,
 } from './types.ts';
@@ -346,10 +347,18 @@ class Hades {
     this.#plugins.forEach((plugin) => plugin.play?.(this));
   }
 
-  public pause(): void {
+  public pause(options: Partial<PauseOptions> = {}): void {
+    const resolved: PauseOptions = { inertia: false, ...options };
     this.running = false;
     this.#manager.off();
-    this.#plugins.forEach((plugin) => plugin.pause?.(this));
+    // Stop on the spot by moving the target onto the rendered position
+    if (!resolved.inertia) {
+      this.#amount.x = this.amount.x;
+      this.#amount.y = this.amount.y;
+      this.#automaticScrolling = false;
+      this.#timeline.duration = this.#options.easing.duration;
+    }
+    this.#plugins.forEach((plugin) => plugin.pause?.(this, resolved));
   }
 
   public destroy(): void {
@@ -436,6 +445,7 @@ export {
   type HadesOptions,
   type HadesPlugin,
   type HermesEvent,
+  type PauseOptions,
   type Timeline,
   type Vec2,
 } from './types.ts';

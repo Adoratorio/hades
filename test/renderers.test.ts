@@ -126,6 +126,138 @@ describe('LenisRender', () => {
   });
 });
 
+describe('LenisRender pause lock', () => {
+  const root = document.documentElement;
+  afterEach(() => {
+    root.removeAttribute('style');
+  });
+
+  it('locks the root for a window scroll node and restores its inline overflow on play', () => {
+    const { hades } = setup();
+    root.style.setProperty('overflow-y', 'scroll');
+    root.style.setProperty('overflow-x', 'clip', 'important');
+    hades.registerPlugin(new LenisRender());
+
+    hades.pause();
+    expect(root.style.getPropertyValue('overflow-x')).toBe('hidden');
+    expect(root.style.getPropertyValue('overflow-y')).toBe('hidden');
+    expect(root.classList.contains('hades-paused')).toBe(true);
+
+    hades.play();
+    expect(root.classList.contains('hades-paused')).toBe(false);
+    expect(root.style.getPropertyValue('overflow-y')).toBe('scroll');
+    expect(root.style.getPropertyPriority('overflow-y')).toBe('');
+    expect(root.style.getPropertyValue('overflow-x')).toBe('clip');
+    expect(root.style.getPropertyPriority('overflow-x')).toBe('important');
+  });
+
+  it('locks an element scroll node and leaves the root untouched', () => {
+    const { hades } = setup();
+    const node = document.createElement('div');
+    // happy-dom does not expand the `overflow` shorthand: the browser check covers it
+    node.style.overflowY = 'auto';
+    hades.registerPlugin(new LenisRender({ scrollNode: node }));
+
+    hades.pause();
+    expect(node.style.overflowY).toBe('hidden');
+    expect(root.style.overflowY).toBe('');
+
+    hades.play();
+    expect(node.style.overflowX).toBe('');
+    expect(node.style.overflowY).toBe('auto');
+  });
+
+  it('keeps the original overflow across repeated pause and play calls', () => {
+    const { hades } = setup();
+    const node = document.createElement('div');
+    node.style.overflowY = 'auto';
+    hades.registerPlugin(new LenisRender({ scrollNode: node }));
+
+    hades.play();
+    expect(node.style.overflowY).toBe('auto');
+    hades.pause();
+    hades.pause();
+    hades.play();
+    expect(node.style.overflowY).toBe('auto');
+  });
+
+  it('restores the overflow when destroyed while paused', () => {
+    const { hades } = setup();
+    const node = document.createElement('div');
+    node.style.overflowY = 'auto';
+    hades.registerPlugin(new LenisRender({ scrollNode: node }));
+
+    hades.pause();
+    hades.destroy();
+    expect(node.style.overflowY).toBe('auto');
+    expect(node.classList.contains('hades-paused')).toBe(false);
+  });
+
+  it('moves the lock when the scroll node is swapped while paused', () => {
+    const { hades } = setup();
+    const node = document.createElement('div');
+    node.style.overflowY = 'auto';
+    size(node, { scrollHeight: 600, clientHeight: 100 });
+    const p = new LenisRender();
+    hades.registerPlugin(p);
+
+    hades.pause();
+    p.swapScrollNode(node);
+    expect(root.style.overflowY).toBe('');
+    expect(root.classList.contains('hades-paused')).toBe(false);
+    expect(node.style.overflowY).toBe('hidden');
+    expect(node.classList.contains('hades-paused')).toBe(true);
+
+    p.swapScrollNode(window);
+    expect(node.style.overflowY).toBe('auto');
+    expect(node.classList.contains('hades-paused')).toBe(false);
+    expect(root.style.overflowY).toBe('hidden');
+    expect(root.classList.contains('hades-paused')).toBe(true);
+
+    hades.play();
+    expect(root.style.overflowY).toBe('');
+    expect(root.classList.contains('hades-paused')).toBe(false);
+  });
+
+  it('does not lock a node swapped in while running', () => {
+    const { hades } = setup();
+    const node = document.createElement('div');
+    const p = new LenisRender();
+    hades.registerPlugin(p);
+
+    p.swapScrollNode(node);
+    expect(node.style.overflowY).toBe('');
+  });
+
+  it('renders a programmatic scroll while paused', () => {
+    const { aion, hades } = setup();
+    const node = document.createElement('div');
+    size(node, { scrollHeight: 600, clientHeight: 100 });
+    hades.registerPlugin(new LenisRender({ scrollNode: node }));
+
+    hades.pause();
+    hades.scrollTo({ y: 200 }, 0);
+    aion.frame(16);
+    expect(node.scrollTop).toBe(200);
+  });
+
+  it('follows a native scroll right after pausing instead of overwriting it', () => {
+    const { aion, hades } = setup();
+    const node = document.createElement('div');
+    size(node, { scrollHeight: 600, clientHeight: 100 });
+    hades.registerPlugin(new LenisRender({ scrollNode: node }));
+    hades.scrollTo({ y: 100 }, 0);
+    aion.frame(16);
+
+    hades.pause();
+    node.scrollTop = 300;
+    node.dispatchEvent(new Event('scroll'));
+    aion.frame(16);
+    expect(hades.amount.y).toBe(300);
+    expect(node.scrollTop).toBe(300);
+  });
+});
+
 describe('NativeRender', () => {
   it('initializes from an already scrolled element and detaches on destroy', () => {
     const { aion, hades } = setup();

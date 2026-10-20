@@ -28,6 +28,11 @@ let browser;
 try {
   browser = await playwright[browserType].launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}) });
   const page = await browser.newPage({ viewport: { width: 1000, height: 700 } });
+  // Real wheel input, for checks that need the browser to scroll natively
+  await page.exposeFunction('realWheel', async (x, y, deltaX, deltaY) => {
+    await page.mouse.move(x, y);
+    await page.mouse.wheel(deltaX, deltaY);
+  });
   await page.goto(`http://127.0.0.1:${server.address().port}/`);
   await page.waitForFunction(() => window.result, { timeout: 30000 });
   const result = await page.evaluate(() => window.result);
