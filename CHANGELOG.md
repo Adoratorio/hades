@@ -2,7 +2,7 @@
 
 This file records changes from 2.0.0 onward. See [GitHub releases](https://github.com/Adoratorio/hades/releases) for published release notes. Dates are shown where a matching GitHub release exists.
 
-## Unreleased
+## [2.1.0](https://github.com/Adoratorio/hades/releases/tag/v2.1.0)
 
 ### Changes
 
