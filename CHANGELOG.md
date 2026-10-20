@@ -4,6 +4,11 @@ This file records changes from 2.0.0 onward. See [GitHub releases](https://githu
 
 ## Unreleased
 
+### Changes
+
+- `pause()` stops the scroll on the spot instead of letting the pending momentum or `scrollTo` run out; pass `{ inertia: true }` to keep the previous behavior. Plugin `pause` hooks receive the resolved `PauseOptions`.
+- LenisRender locks the native scroll while paused (`overflow: hidden` and the `hades-paused` class on the scroll node, removed on `play()`/`destroy()`, moved by `swapScrollNode()`), so the page no longer scrolls natively once Hades is paused.
+
 ### Documentation
 
 - Document shared engines, scroll parameters, plugin hooks and missing renderer methods and state.

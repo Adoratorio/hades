@@ -66,7 +66,7 @@ hades.scrollTo(position: Partial<Vec2>, duration: number, prevent?: boolean)
 
 // Play or Pause the event reaction
 hades.play()
-hades.pause()
+hades.pause(options?: Partial<PauseOptions>)
 
 // Tear down the instance and clean up
 hades.destroy()
@@ -75,6 +75,8 @@ hades.destroy()
 ### Scroll parameters
 
 `scrollTo(position, duration, prevent = false)` takes pixels and milliseconds. Supply either axis or both; omitted axes keep their current targets. A duration of zero or less requests immediate movement. Position values and duration must be finite. The third argument skips plugin `scrollTo` hooks when true; it does not prevent browser events. `play()`, `pause()`, `scrollTo()` and `destroy()` return `void`.
+
+`pause()` stops reacting to input and, by default, stops the scroll on the spot. Pass `{ inertia: true }` to let the pending momentum (or a running `scrollTo`) finish instead. `scrollTo()` keeps working while paused. Renderers may also lock the native scroll while paused, as [`LenisRender`](src/plugins/lenis-render/README.md#pause-and-play) does.
 
 ### Registering plugins
 
@@ -122,7 +124,8 @@ hades.root      // resolved listener root (read-only)
 | `preFrame` | `context` | Before frame motion is calculated. |
 | `render` | `context` | After frame motion is calculated. |
 | `scrollTo` | `context, position: Partial<Vec2>, duration: number` | Programmatic scrolling, unless `prevent` is true. |
-| `play`, `pause` | `context` | Input handling is enabled or disabled. |
+| `play` | `context` | Input handling is enabled. |
+| `pause` | `context, options: PauseOptions` | Input handling is disabled; `options.inertia` tells whether the pending motion finishes. |
 | `destroy` | None | Unregistration or instance destruction. |
 
 Hooks run in registration order within each phase. Frame hooks continue while the instance is still or input handling is paused. See the [plugin contract](src/types.ts) for complete types, including `BoundedRenderer` for renderers exposing `boundaries`.

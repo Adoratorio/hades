@@ -53,8 +53,14 @@ if (node) lenisRenderInstance.swapScrollNode(node);
 
 Call `lenisRenderInstance.recalculate()` to refresh cached bounds immediately after layout changes that are not reported by the observers.
 
+## Pause and play
+
+While `hades.pause()` is in effect the renderer locks the native scroll by setting `overflow-x` and `overflow-y` to `hidden` on the scroll node (the `<html>` element when `scrollNode` is `window`). Wheel, touch, keyboard and scrollbar input no longer move the page, the scroll position is kept and `hades.scrollTo()` keeps working. Nested scrollable elements are not affected. The locked node also gets the `hades-paused` class, to style the paused state. `hades.play()` and `destroy()` remove the class and restore the previous inline declarations, and `swapScrollNode()` moves the lock to the new node.
+
+Hiding the overflow also hides the native scrollbar, which can shift the layout: use `scrollbar-gutter: stable` on the scroll node (or on `.hades-paused`) to keep its space reserved. When `scrollNode` is an element inside a page that can also scroll, wheel input over the locked element scrolls the page instead.
+
 ## State and lifecycle
 
 `scrollNode` is a read-only `HTMLElement | Window`; use `swapScrollNode(node)` to change it. `boundaries` is a read-only `Boundaries` object containing `min` and `max` vectors. `startRender()`, `stopRender()`, `swapScrollNode(node)`, `recalculate()` and `destroy()` return `void`.
 
-Hades calls `register(context)`, `wheel(context, event)`, `preFrame()`, `render(context)`, `scroll(context, event)` and `scrollTo(context)` as lifecycle hooks. `scrollTo()` defaults to the registered context when called directly. Use `hades.scrollTo()` for normal programmatic scrolling. `destroy()` removes native listeners and observers; unregister the plugin through Hades to remove it from the frame loop.
+Hades calls `register(context)`, `wheel(context, event)`, `preFrame()`, `render(context)`, `scroll(context, event)`, `scrollTo(context)`, `play()` and `pause(context, options)` as lifecycle hooks. `scrollTo()` defaults to the registered context when called directly. Use `hades.scrollTo()` for normal programmatic scrolling. `destroy()` removes native listeners and observers; unregister the plugin through Hades to remove it from the frame loop.
